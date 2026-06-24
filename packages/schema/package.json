@@ -1,0 +1,28 @@
+{
+  "name": "@review-tour/schema",
+  "version": "0.1.0",
+  "description": "Shared schema and validation helpers for Review Tour artifacts.",
+  "license": "Apache-2.0",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "dist/reviewTourSchema.js",
+  "types": "dist/reviewTourSchema.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/reviewTourSchema.d.ts",
+      "import": "./dist/reviewTourSchema.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build:node": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vp test"
+  }
+}

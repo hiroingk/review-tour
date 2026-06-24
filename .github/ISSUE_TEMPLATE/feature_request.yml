@@ -1,0 +1,26 @@
+name: Feature request
+description: Suggest an improvement to the CLI, skill workflow, or viewer.
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What review workflow would this improve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What should Review Tour do?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives
+      description: Any other approaches you considered?
+    validations:
+      required: false

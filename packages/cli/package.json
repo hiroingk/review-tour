@@ -1,0 +1,25 @@
+{
+  "name": "@review-tour/cli",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CLI for creating and opening guided review tours from local git diffs.",
+  "license": "Apache-2.0",
+  "bin": {
+    "review-tour": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "scripts": {
+    "build:node": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vp test"
+  },
+  "dependencies": {
+    "@review-tour/schema": "workspace:*",
+    "@review-tour/viewer": "workspace:*"
+  }
+}

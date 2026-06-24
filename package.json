@@ -1,0 +1,76 @@
+{
+  "name": "review-tour",
+  "version": "0.1.0",
+  "description": "Create browser-based guided review tours from local git diffs.",
+  "keywords": [
+    "code-review",
+    "codex",
+    "diff",
+    "git",
+    "review-tour"
+  ],
+  "homepage": "https://github.com/hiroingk/review-tour#readme",
+  "bugs": {
+    "url": "https://github.com/hiroingk/review-tour/issues"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hiroingk/review-tour.git"
+  },
+  "bin": {
+    "review-tour": "bin/review-tour.js"
+  },
+  "files": [
+    "bin",
+    "packages/cli/dist",
+    "skill-data",
+    "skills",
+    "LICENSE",
+    "README.md"
+  ],
+  "type": "module",
+  "scripts": {
+    "dev": "vp dev",
+    "build": "vp build && vp run -r build:node && node packages/viewer/scripts/sanitize-dist.js",
+    "check": "vp check",
+    "install:local": "vp run build && sh scripts/install-local-bin.sh",
+    "lint": "vp check --no-fmt",
+    "skills:check": "npx --yes skills add . --list && npx --yes skills use . --skill review-tour >/dev/null && pnpm --filter @review-tour/cli build && node packages/cli/dist/index.js skills list --json >/dev/null && node packages/cli/dist/index.js skills get core >/dev/null",
+    "skills:list": "npx --yes skills add . --list",
+    "skills:prompt": "npx --yes skills use . --skill review-tour",
+    "typecheck": "vp check --no-fmt --no-lint",
+    "test": "vp test",
+    "verify": "vp check && vp test && vp run build"
+  },
+  "dependencies": {
+    "@review-tour/schema": "workspace:*",
+    "@review-tour/viewer": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.0",
+    "typescript": "^6.0.3",
+    "vite-plus": "catalog:"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "packageManager": "pnpm@10.0.0",
+  "pnpm": {
+    "overrides": {
+      "vite": "catalog:",
+      "vitefu": "1.1.2",
+      "vitest": "catalog:"
+    },
+    "peerDependencyRules": {
+      "allowAny": [
+        "vite",
+        "vitest"
+      ],
+      "allowedVersions": {
+        "vite": "*",
+        "vitest": "*"
+      }
+    }
+  }
+}

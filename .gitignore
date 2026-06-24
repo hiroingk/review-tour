@@ -1,0 +1,9 @@
+node_modules/
+docs/
+dist/
+packages/*/dist/
+.tanstack/
+.vite/
+.turbo/
+.DS_Store
+*.log
