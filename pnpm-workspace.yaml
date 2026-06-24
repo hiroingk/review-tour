@@ -1,0 +1,7 @@
+packages:
+  - '.'
+  - 'packages/*'
+catalog:
+  vite: npm:@voidzero-dev/vite-plus-core@latest
+  vitest: 4.1.9
+  vite-plus: latest

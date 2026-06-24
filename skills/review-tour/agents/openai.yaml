@@ -1,0 +1,7 @@
+interface:
+  display_name: 'Review Tour'
+  short_description: 'Open local git diffs as guided browser tours'
+  default_prompt: 'Use $review-tour to open the current git diff as a guided browser review tour.'
+
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,54 @@
+{
+  "name": "@review-tour/viewer",
+  "version": "0.1.0",
+  "description": "Localhost viewer for guided Review Tour artifacts.",
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "dist/lib/index.js",
+  "types": "dist/lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/lib/index.d.ts",
+      "import": "./dist/lib/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "vp build --config ./vite.config.ts && tsc -p tsconfig.node.json && node ./scripts/sanitize-dist.js",
+    "build:node": "tsc -p tsconfig.node.json",
+    "generate-routes": "tsr generate",
+    "lint": "vp check --no-fmt",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.node.json --noEmit",
+    "test": "vp test"
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.6.0",
+    "@hugeicons/core-free-icons": "^4.2.1",
+    "@hugeicons/react": "^1.1.7",
+    "@pierre/trees": "1.0.0-beta.4",
+    "@review-tour/schema": "workspace:*",
+    "@tailwindcss/vite": "^4.3.1",
+    "@tanstack/react-router": "^1.170.16",
+    "@tanstack/react-start": "^1.168.26",
+    "@tanstack/router-plugin": "^1.168.18",
+    "@vitejs/plugin-react": "^6.0.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "shiki": "4.2.0",
+    "tailwind-merge": "^3.6.0",
+    "tailwindcss": "^4.3.1",
+    "vite": "catalog:"
+  },
+  "devDependencies": {
+    "@tanstack/router-cli": "^1.167.17",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3"
+  }
+}

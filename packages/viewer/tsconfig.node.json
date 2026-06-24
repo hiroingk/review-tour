@@ -1,0 +1,8 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist/lib"
+  },
+  "include": ["src/index.ts", "src/tourCache.ts", "src/reviewModel.ts", "src/server/**/*.ts"]
+}
