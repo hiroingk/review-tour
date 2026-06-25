@@ -26,6 +26,7 @@ export type ReviewTour = {
     };
     files: DiffFile[];
   };
+  pullRequest?: PullRequestContext;
   tour: {
     title: string;
     summary: string;
@@ -36,6 +37,21 @@ export type ReviewTour = {
 };
 
 export type ReviewTourDraft = Omit<ReviewTour, 'tour'>;
+
+export type PullRequestContext = {
+  additions?: number;
+  author?: string;
+  baseRefName: string;
+  body?: string;
+  changedFiles?: number;
+  deletions?: number;
+  headRefName: string;
+  headRepository?: string;
+  isCrossRepository?: boolean;
+  number: number;
+  title: string;
+  url: string;
+};
 
 export type DiffFile = {
   id: string;
@@ -210,6 +226,9 @@ function validateDraftLike(value: unknown, errors: string[]) {
   validateGenerator(root.generator, errors);
   validateRepository(root.repository, errors);
   validateDiff(root.diff, errors);
+  if (root.pullRequest !== undefined) {
+    validatePullRequest(root.pullRequest, errors);
+  }
   validateWarnings(root.warnings, errors);
 }
 
@@ -270,6 +289,41 @@ function validateDiff(value: unknown, errors: string[]) {
   }
 
   diff.files.forEach((file, index) => validateDiffFile(file, `diff.files[${index}]`, errors));
+}
+
+function validatePullRequest(value: unknown, errors: string[]) {
+  const pullRequest = asRecord(value);
+  if (!pullRequest) {
+    errors.push('pullRequest must be an object');
+    return;
+  }
+
+  expectNonNegativeNumber(pullRequest.number, 'pullRequest.number', errors);
+  expectString(pullRequest.title, 'pullRequest.title', errors);
+  expectString(pullRequest.url, 'pullRequest.url', errors);
+  expectString(pullRequest.baseRefName, 'pullRequest.baseRefName', errors);
+  expectString(pullRequest.headRefName, 'pullRequest.headRefName', errors);
+  if (pullRequest.body !== undefined) {
+    expectStringValue(pullRequest.body, 'pullRequest.body', errors);
+  }
+  if (pullRequest.author !== undefined) {
+    expectString(pullRequest.author, 'pullRequest.author', errors);
+  }
+  if (pullRequest.headRepository !== undefined) {
+    expectString(pullRequest.headRepository, 'pullRequest.headRepository', errors);
+  }
+  if (pullRequest.additions !== undefined) {
+    expectNonNegativeNumber(pullRequest.additions, 'pullRequest.additions', errors);
+  }
+  if (pullRequest.deletions !== undefined) {
+    expectNonNegativeNumber(pullRequest.deletions, 'pullRequest.deletions', errors);
+  }
+  if (pullRequest.changedFiles !== undefined) {
+    expectNonNegativeNumber(pullRequest.changedFiles, 'pullRequest.changedFiles', errors);
+  }
+  if (pullRequest.isCrossRepository !== undefined) {
+    expectBoolean(pullRequest.isCrossRepository, 'pullRequest.isCrossRepository', errors);
+  }
 }
 
 function validateDiffFile(value: unknown, path: string, errors: string[]) {

@@ -1,12 +1,12 @@
 ---
 name: review-tour
-description: Create guided review tours for local git diffs. By default, generate and open a browser-based review tour. Use chat-only output only when the user explicitly asks to explain the diff in chat or text.
+description: Create guided review tours for local git diffs and GitHub pull request URLs. By default, generate and open a browser-based review tour. Use chat-only output only when the user explicitly asks to explain the diff in chat or text.
 allowed-tools: Bash(review-tour:*), Bash(npx review-tour:*)
 ---
 
 # Review Tour
 
-Create guided review tours from local git diffs.
+Create guided review tours from local git diffs and GitHub pull request URLs.
 
 This file is a distribution stub. Before running review workflows, load the
 versioned workflow instructions from the installed CLI:

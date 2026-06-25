@@ -89,6 +89,22 @@ describe('review tour schema', () => {
     expect(result.ok).toBe(true);
   });
 
+  test('validates optional pull request metadata', () => {
+    const result = validateReviewTour(
+      createTour({
+        pullRequest: {
+          baseRefName: 'main',
+          headRefName: 'feature',
+          number: 123,
+          title: 'Add feature',
+          url: 'https://github.com/octocat/repo/pull/123',
+        },
+      }),
+    );
+
+    expect(result.ok).toBe(true);
+  });
+
   test('rejects an invalid schema version', () => {
     const result = validateReviewTour(createTour({ schemaVersion: 'bad' }));
     expect(result.ok).toBe(false);

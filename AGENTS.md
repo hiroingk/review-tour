@@ -118,6 +118,7 @@ Install the packed tarballs into a temporary project when changing package metad
 ## Style
 
 - Keep public repo text in English.
+- Write pull request titles and descriptions in English. Do not use `[codex]` in pull request titles.
 - Do not add emoji to CLI output, README text, or skill instructions.
 - Keep command examples copy-pasteable.
 - Prefer concise docs that point to the authoritative command or file.
