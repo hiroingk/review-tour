@@ -33,7 +33,7 @@
   "scripts": {
     "dev": "vp dev",
     "build": "vp build && vp run -r build:node && node packages/viewer/scripts/sanitize-dist.js",
-    "check": "vp check",
+    "check": "vp run -r build:node && vp check",
     "install:local": "vp run build && sh scripts/install-local-bin.sh",
     "lint": "vp check --no-fmt",
     "skills:check": "npx --yes skills add . --list && npx --yes skills use . --skill review-tour >/dev/null && pnpm --filter @review-tour/cli build && node packages/cli/dist/index.js skills list --json >/dev/null && node packages/cli/dist/index.js skills get core >/dev/null",
@@ -41,7 +41,7 @@
     "skills:prompt": "npx --yes skills use . --skill review-tour",
     "typecheck": "vp check --no-fmt --no-lint",
     "test": "vp test",
-    "verify": "vp check && vp test && vp run build"
+    "verify": "pnpm run check && pnpm run test && pnpm run build"
   },
   "dependencies": {
     "@review-tour/schema": "workspace:*",
