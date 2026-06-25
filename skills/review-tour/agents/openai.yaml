@@ -1,6 +1,6 @@
 interface:
   display_name: 'Review Tour'
-  short_description: 'Open local git diffs as guided browser tours'
+  short_description: 'Open git diffs and PR URLs as guided browser tours'
   default_prompt: '$review-tour'
 
 policy:

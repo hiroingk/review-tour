@@ -57,6 +57,7 @@ Use viewer mode by default when the user asks to review:
 - the current branch
 - staged changes
 - working tree changes
+- a GitHub pull request URL
 - a PR-like diff
 - AI-generated code
 - a local git diff
@@ -78,6 +79,7 @@ path, because it only creates deterministic file-based chapters.
 
 1. Confirm the current directory is a git repository.
 2. Infer the diff mode:
+   - prompt includes a GitHub pull request URL: `--pr <url>`
    - branch ahead of base: `base...head`
    - only unstaged changes: `working-tree`
    - only staged changes: `staged`
@@ -91,12 +93,13 @@ review-tour collect --json
 Use explicit flags when needed:
 
 ```bash
+review-tour collect --pr https://github.com/owner/repo/pull/123 --json
 review-tour collect --base origin/main --head HEAD --mode base...head --json
 review-tour collect --mode working-tree --json
 review-tour collect --mode staged --json
 ```
 
-4. Read the draft JSON emitted by the collector. It contains files, hunks, hunk IDs, diff stats, repository metadata, and warnings.
+4. Read the draft JSON emitted by the collector. It contains files, hunks, hunk IDs, diff stats, repository metadata, optional `pullRequest` metadata, and warnings.
 5. Review the code changes and generate a `{ title, prologue, chapters }` payload from the draft:
    - make `prologue.whyThisPr` explain the concrete reviewer-facing motivation or problem
    - make `prologue.whatItDoes` explain the new behavior or implementation outcome

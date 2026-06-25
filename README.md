@@ -27,6 +27,7 @@ flags.
 - Node.js `>=22.12.0`
 - Git
 - Codex or Claude Code
+- GitHub CLI (`gh`) for GitHub pull request URLs
 
 pnpm `10` is only required when developing this repository from source.
 
@@ -119,6 +120,12 @@ Review a branch-like diff against an explicit base:
 review-tour generate --base origin/main --head HEAD --mode base...head
 ```
 
+Review a GitHub pull request without checking it out:
+
+```bash
+review-tour generate --pr https://github.com/owner/repo/pull/123
+```
+
 Generate without opening the browser and print machine-readable output:
 
 ```bash
@@ -128,8 +135,8 @@ review-tour generate --no-open --json
 ## CLI Commands
 
 ```text
-review-tour generate [--base origin/main] [--head HEAD] [--mode base...head|working-tree|staged|custom] [--no-open] [--json]
-review-tour collect --json [--base origin/main] [--head HEAD] [--mode base...head|working-tree|staged|custom]
+review-tour generate [--pr <url|number>] [--base origin/main] [--head HEAD] [--mode base...head|working-tree|staged|custom] [--no-open] [--json]
+review-tour collect --json [--pr <url|number>] [--base origin/main] [--head HEAD] [--mode base...head|working-tree|staged|custom]
 review-tour write --draft <path> --chapters <path> [--open] [--json]
 review-tour open [latest|tourId] [--json]
 review-tour serve [--port 4378]
@@ -146,8 +153,9 @@ artifact, stores it in the OS cache, and opens the viewer by default.
 ### `collect`
 
 Collects repository metadata, base branch information, parsed diff files, hunks,
-and hunk IDs. This command emits a draft JSON payload that can be used by tools
-or skills to create custom chapters.
+and hunk IDs. With `--pr`, it uses the GitHub CLI to collect a pull request diff
+without checking it out. This command emits a draft JSON payload that can be used
+by tools or skills to create custom chapters.
 
 ### `write`
 

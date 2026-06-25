@@ -59,8 +59,8 @@ function helpText() {
   return `review-tour
 
 Commands:
-  generate [--base origin/main] [--head HEAD] [--mode base...head|working-tree|staged|custom] [--no-open] [--json]
-  collect --json [--base origin/main] [--head HEAD] [--mode base...head|working-tree|staged|custom]
+  generate [--pr <url|number>] [--base origin/main] [--head HEAD] [--mode base...head|working-tree|staged|custom] [--no-open] [--json]
+  collect --json [--pr <url|number>] [--base origin/main] [--head HEAD] [--mode base...head|working-tree|staged|custom]
   write --draft <path> --chapters <path> [--open] [--json]
   open [latest|tourId] [--json]
   serve [--port 4378]
