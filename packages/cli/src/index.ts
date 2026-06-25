@@ -65,7 +65,7 @@ Commands:
   open [latest|tourId] [--json]
   serve [--port 4378]
   skills list|get
-  gc [--days 30] [--keep 20]
+  gc [--days 30] [--keep 20] [--all]
   update
 `;
 }

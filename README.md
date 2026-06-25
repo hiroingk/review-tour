@@ -134,7 +134,7 @@ review-tour write --draft <path> --chapters <path> [--open] [--json]
 review-tour open [latest|tourId] [--json]
 review-tour serve [--port 4378]
 review-tour skills list|get
-review-tour gc [--days 30] [--keep 20]
+review-tour gc [--days 30] [--keep 20] [--all]
 review-tour update
 ```
 
@@ -174,7 +174,8 @@ review-tour skills get core
 
 ### `gc`
 
-Removes old cached review artifacts.
+Removes old cached review artifacts. Use `--all` to clear the entire Review
+Tour cache directory.
 
 ### `update`
 
@@ -198,6 +199,27 @@ directory is not on your `PATH`, add it:
 
 ```bash
 export PATH="$HOME/.local/bin:$PATH"
+```
+
+After changing CLI, viewer, or bundled skill workflow code, rerun:
+
+```bash
+pnpm run install:local
+```
+
+That rebuilds the packages and refreshes the `~/.local/bin/review-tour` symlink,
+so any repository on the same machine can use the latest local CLI:
+
+```bash
+cd /path/to/another/git-repo
+review-tour --help
+```
+
+If you change the distributed skill stub under `skills/`, reinstall the local
+skill as well:
+
+```bash
+npx skills add /path/to/review-tour
 ```
 
 For local distribution checks while developing this repository:

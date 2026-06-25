@@ -225,6 +225,14 @@ Artifacts must live in OS cache, not in the repository:
 The viewer reads only cache artifacts by `repoHash` and `tourId`. It must never
 accept arbitrary filesystem paths from URL input.
 
+When the user asks to clear Review Tour cache data, use the CLI cleanup path:
+
+```bash
+review-tour gc --all
+```
+
+Do not manually delete guessed cache paths.
+
 Allowed URL:
 
 ```text
