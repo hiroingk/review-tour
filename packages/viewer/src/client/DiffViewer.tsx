@@ -29,6 +29,7 @@ import {
 } from '../reviewModel';
 import type { DiffDisplaySettings } from './diffSettings';
 import { fileDomId } from './dom';
+import { getCollapsedFileScrollTop } from './collapseScroll';
 import {
   createReviewComment,
   getReviewCommentLineKey,
@@ -101,6 +102,10 @@ const COMMENT_CARD_HEIGHT = 108;
 const COMMENT_CARD_EDIT_HEIGHT = 176;
 const COMMENT_CARD_ROW_PADDING_Y = 16;
 const COMMENT_CARD_ROW_GAP = 8;
+
+type CollapseScrollTarget =
+  | { element: HTMLElement; kind: 'element'; top: number }
+  | { kind: 'window'; top: number };
 
 export function DiffViewer({
   comments,
@@ -209,6 +214,70 @@ function FileDiff({
   const expandFullFile = () => {
     setCollapsed(false);
     setExpandedFolds(new Set(foldIds));
+  };
+
+  const getCollapseScrollTarget = (): CollapseScrollTarget | null => {
+    const article = fileRef.current;
+    if (!article || typeof window === 'undefined') return null;
+
+    const scrollRoot = article.closest<HTMLElement>('[data-diff-scroll-root]');
+
+    if (
+      scrollRoot &&
+      (scrollRoot.scrollTop > 0 || scrollRoot.scrollHeight > scrollRoot.clientHeight + 1)
+    ) {
+      const top = getCollapsedFileScrollTop({
+        currentScrollTop: scrollRoot.scrollTop,
+        fileTop: article.getBoundingClientRect().top,
+        rootTop: scrollRoot.getBoundingClientRect().top,
+      });
+
+      return top === null ? null : { element: scrollRoot, kind: 'element', top };
+    }
+
+    const top = getCollapsedFileScrollTop({
+      currentScrollTop: window.scrollY,
+      fileTop: article.getBoundingClientRect().top,
+      rootTop: 0,
+    });
+
+    return top === null ? null : { kind: 'window', top };
+  };
+
+  const restoreCollapseScrollTarget = (target: CollapseScrollTarget | null) => {
+    if (!target || typeof window === 'undefined') return;
+
+    window.requestAnimationFrame(() => {
+      if (target.kind === 'element') {
+        target.element.scrollTo({ top: target.top });
+        return;
+      }
+
+      window.scrollTo({ top: target.top });
+    });
+  };
+
+  const collapseFile = () => {
+    const target = getCollapseScrollTarget();
+    setCollapsed(true);
+    restoreCollapseScrollTarget(target);
+  };
+
+  const toggleCollapsed = () => {
+    if (collapsed) {
+      setCollapsed(false);
+      return;
+    }
+
+    collapseFile();
+  };
+
+  const toggleViewed = () => {
+    if (!viewed && !collapsed) {
+      collapseFile();
+    }
+
+    onViewedToggle(file.id);
   };
 
   const startLineSelection = (
@@ -385,7 +454,7 @@ function FileDiff({
         >
           <FileHeaderIconAction
             ariaLabel={collapsed ? 'Expand file' : 'Collapse file'}
-            onClick={() => setCollapsed((value) => !value)}
+            onClick={toggleCollapsed}
             title={collapsed ? 'Expand file' : 'Collapse file'}
           >
             <AppIcon
@@ -414,7 +483,7 @@ function FileDiff({
           </div>
           <FileViewedToggle
             completed={viewed}
-            onToggle={() => onViewedToggle(file.id)}
+            onToggle={toggleViewed}
             title={viewed ? 'Mark file as not viewed' : 'Mark file as viewed'}
           />
         </div>
