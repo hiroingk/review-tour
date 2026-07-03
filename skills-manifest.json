@@ -1,0 +1,15 @@
+{
+  "source": "hiroingk/review-tour",
+  "skills": {
+    "core": {
+      "hash": "c4442e4ce6fcce0a",
+      "files": 1
+    }
+  },
+  "stubs": {
+    "review-tour": {
+      "hash": "5a97338be68fb9c0",
+      "files": 3
+    }
+  }
+}

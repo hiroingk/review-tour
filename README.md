@@ -137,12 +137,14 @@ review-tour generate --no-open --json
 ```text
 review-tour generate [--pr <url|number>] [--base origin/main] [--head HEAD] [--mode base...head|working-tree|staged|custom] [--no-open] [--json]
 review-tour collect --json [--pr <url|number>] [--base origin/main] [--head HEAD] [--mode base...head|working-tree|staged|custom]
-review-tour write --draft <path> --chapters <path> [--open] [--json]
+review-tour write --draft <path|-> --chapters <path|-> [--open] [--json]
 review-tour open [latest|tourId] [--json]
 review-tour serve [--port 4378]
-review-tour skills list|get
+review-tour skills list|get|check
+review-tour doctor [--json]
 review-tour gc [--days 30] [--keep 20] [--all]
 review-tour update
+review-tour version
 ```
 
 ### `generate`
@@ -160,7 +162,9 @@ by tools or skills to create custom chapters.
 ### `write`
 
 Merges a collected draft with a chapters JSON file, validates hunk coverage,
-writes the final artifact, and optionally opens the viewer.
+writes the final artifact, and optionally opens the viewer. Use `-` for either
+input to read that JSON from stdin, such as `--chapters -` to pass AI-authored
+chapters without writing a temporary chapters file.
 
 ### `open`
 
@@ -179,6 +183,25 @@ Prints versioned skill content bundled with the installed CLI:
 review-tour skills list
 review-tour skills get core
 ```
+
+Verify that the bundled skill content matches the shipped manifest:
+
+```bash
+review-tour skills check
+```
+
+### `doctor`
+
+Checks the local environment: Node.js version, git, the current repository,
+cache directory writability, bundled skill data, and the GitHub CLI.
+
+```bash
+review-tour doctor
+review-tour doctor --json
+```
+
+With `--json`, `doctor` always exits `0`; read the `ok` field in the payload.
+Without `--json`, it exits `1` when a check fails.
 
 ### `gc`
 
@@ -322,6 +345,23 @@ pnpm pack
 pnpm --filter @review-tour/schema pack
 pnpm --filter @review-tour/viewer pack
 ```
+
+## Releasing
+
+All packages share one version. To cut a release:
+
+```bash
+pnpm run changelog:draft
+pnpm run set-version 0.2.0
+git commit -am "Release v0.2.0"
+git tag v0.2.0
+git push origin main v0.2.0
+```
+
+Pushing the tag runs the publish workflow, which verifies the tag matches
+`package.json`, runs the full verification suite, and publishes to npm.
+Pre-release versions such as `0.2.0-beta.1` publish under the matching npm
+dist-tag instead of `latest`.
 
 ## Security
 

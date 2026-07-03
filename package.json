@@ -26,6 +26,7 @@
     "packages/cli/dist",
     "skill-data",
     "skills",
+    "skills-manifest.json",
     "LICENSE",
     "README.md"
   ],
@@ -33,15 +34,22 @@
   "scripts": {
     "dev": "vp dev",
     "build": "vp build && vp run -r build:node && node packages/viewer/scripts/sanitize-dist.js",
+    "changelog:draft": "node scripts/draft-changelog.mjs",
     "check": "vp run -r build:node && vp check",
     "install:local": "vp run build && sh scripts/install-local-bin.sh",
+    "knip": "knip",
     "lint": "vp check --no-fmt",
+    "prepare": "lefthook install",
+    "set-version": "node scripts/set-version.mjs",
     "skills:check": "npx --yes skills add . --list && npx --yes skills use . --skill review-tour >/dev/null && pnpm --filter @review-tour/cli build && node packages/cli/dist/index.js skills list --json >/dev/null && node packages/cli/dist/index.js skills get core >/dev/null",
+    "skills:lint": "node scripts/lint-skills.mjs",
     "skills:list": "npx --yes skills add . --list",
+    "skills:manifest": "node scripts/generate-skills-manifest.mjs",
+    "skills:manifest:check": "node scripts/generate-skills-manifest.mjs --check",
     "skills:prompt": "npx --yes skills use . --skill review-tour",
     "typecheck": "vp check --no-fmt --no-lint",
     "test": "vp test",
-    "verify": "pnpm run check && pnpm run test && pnpm run build"
+    "verify": "pnpm run check && pnpm run skills:lint && pnpm run skills:manifest:check && pnpm run knip && pnpm run test && pnpm run build"
   },
   "dependencies": {
     "@review-tour/schema": "workspace:*",
@@ -49,6 +57,8 @@
   },
   "devDependencies": {
     "@types/node": "^26.0.0",
+    "knip": "^6.24.0",
+    "lefthook": "^2.1.9",
     "typescript": "^6.0.3",
     "vite-plus": "catalog:"
   },

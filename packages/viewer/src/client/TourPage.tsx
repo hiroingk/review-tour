@@ -8,6 +8,14 @@ import {
   readDiffDisplaySettings,
   writeDiffDisplaySettings,
 } from './diffSettings';
+import {
+  addStringSetValues,
+  createEmptyDiffFoldState,
+  readDiffFoldState,
+  setStringSetValue,
+  writeDiffFoldState,
+  type DiffFoldState,
+} from './diffFoldState';
 import { fileDomId } from './dom';
 import { readReviewComments, writeReviewComments, type ReviewComment } from './reviewComments';
 import { ReviewWorkspace } from './ReviewWorkspace';
@@ -34,6 +42,7 @@ type TourState =
 
 const REVIEW_PROGRESS_STORAGE_PREFIX = 'review-tour:progress';
 const REVIEW_COMMENTS_STORAGE_PREFIX = 'review-tour:comments';
+const DIFF_FOLD_STATE_STORAGE_PREFIX = 'review-tour:diff-folds';
 const LEGACY_CHAPTER_PROGRESS_STORAGE_PREFIX = 'review-tour:completed-chapters';
 
 export function TourPage({
@@ -58,6 +67,7 @@ export function TourPage({
   const [searchOpen, setSearchOpen] = useState(false);
   const [reviewComments, setReviewComments] = useState<ReviewComment[]>([]);
   const [reviewProgress, setReviewProgress] = useState<ReviewProgress>(createEmptyReviewProgress);
+  const [diffFoldState, setDiffFoldState] = useState<DiffFoldState>(createEmptyDiffFoldState);
   const [diffSettings, setDiffSettings] = useState<DiffDisplaySettings>(readDiffDisplaySettings);
 
   useEffect(() => {
@@ -65,6 +75,7 @@ export function TourPage({
       setState({ status: 'error', message: 'Missing repo query.' });
       setReviewComments([]);
       setReviewProgress(createEmptyReviewProgress());
+      setDiffFoldState(createEmptyDiffFoldState());
       return;
     }
 
@@ -76,6 +87,7 @@ export function TourPage({
         getLegacyChapterProgressStorageKey({ repoHash, tourId }),
       ),
     );
+    setDiffFoldState(readDiffFoldState(getDiffFoldStateStorageKey({ repoHash, tourId })));
     setReviewComments(readReviewComments(getReviewCommentsStorageKey({ repoHash, tourId })));
     fetchTour({ repoHash, tourId })
       .then((tour) => {
@@ -137,6 +149,17 @@ export function TourPage({
     });
   };
 
+  const updateDiffFoldState = (updater: (current: DiffFoldState) => DiffFoldState) => {
+    if (!repoHash) return;
+
+    const storageKey = getDiffFoldStateStorageKey({ repoHash, tourId });
+    setDiffFoldState((current) => {
+      const next = updater(current);
+      writeDiffFoldState(storageKey, next);
+      return next;
+    });
+  };
+
   const addReviewComment = (comment: ReviewComment) => {
     updateReviewComments((current) => [...current, comment]);
   };
@@ -179,6 +202,27 @@ export function TourPage({
     }));
   };
 
+  const updateFileCollapsed = (fileId: string, collapsed: boolean) => {
+    updateDiffFoldState((current) => ({
+      ...current,
+      collapsedFileIds: setStringSetValue(current.collapsedFileIds, fileId, collapsed),
+    }));
+  };
+
+  const expandFold = (foldId: string) => {
+    updateDiffFoldState((current) => ({
+      ...current,
+      expandedFoldIds: setStringSetValue(current.expandedFoldIds, foldId, true),
+    }));
+  };
+
+  const expandFolds = (foldIds: readonly string[]) => {
+    updateDiffFoldState((current) => ({
+      ...current,
+      expandedFoldIds: addStringSetValues(current.expandedFoldIds, foldIds),
+    }));
+  };
+
   const updateDiffSettings = (settings: DiffDisplaySettings) => {
     setDiffSettings(settings);
     writeDiffDisplaySettings(settings);
@@ -198,6 +242,7 @@ export function TourPage({
   return (
     <>
       <ReadyTourPage
+        diffFoldState={diffFoldState}
         diffSettings={diffSettings}
         fileFilter={fileFilter}
         mode={mode}
@@ -207,6 +252,9 @@ export function TourPage({
         onCommentDelete={deleteReviewComment}
         onCommentUpdate={updateReviewComment}
         onDiffSettingsChange={updateDiffSettings}
+        onFileCollapsedChange={updateFileCollapsed}
+        onFoldExpand={expandFold}
+        onFoldsExpand={expandFolds}
         onFileViewedToggle={toggleFileViewed}
         onFileFilter={setFileFilter}
         onPendingFilePathChange={setPendingFilePath}
@@ -263,7 +311,7 @@ function TourOverviewSkeleton() {
         <Skeleton className="h-11 w-[136px] rounded-full max-sm:col-span-2 max-sm:justify-self-start" />
       </header>
 
-      <div className="grid gap-6 px-6 py-3 max-sm:px-4 lg:min-h-0 lg:grid-cols-[minmax(390px,0.7fr)_minmax(640px,1.3fr)] lg:overflow-hidden">
+      <div className="grid gap-6 px-6 py-3 max-sm:px-4 lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:overflow-hidden">
         <aside className="min-w-0 lg:grid lg:min-h-0 lg:grid-rows-[auto_minmax(0,1fr)] lg:gap-y-1">
           <div className="flex min-h-10 items-center justify-between">
             <Skeleton className="h-3 w-20 rounded-[4px]" />
@@ -462,6 +510,7 @@ function ReviewWorkspaceSkeleton() {
 }
 
 function ReadyTourPage({
+  diffFoldState,
   diffSettings,
   fileFilter,
   mode,
@@ -471,6 +520,9 @@ function ReadyTourPage({
   onCommentDelete,
   onCommentUpdate,
   onDiffSettingsChange,
+  onFileCollapsedChange,
+  onFoldExpand,
+  onFoldsExpand,
   onFileViewedToggle,
   onFileFilter,
   onPendingFilePathChange,
@@ -483,6 +535,7 @@ function ReadyTourPage({
   selectedId,
   tour,
 }: {
+  diffFoldState: DiffFoldState;
   diffSettings: DiffDisplaySettings;
   fileFilter: string;
   mode: TourMode;
@@ -492,6 +545,9 @@ function ReadyTourPage({
   onCommentDelete: (commentId: string) => void;
   onCommentUpdate: (commentId: string, body: string) => void;
   onDiffSettingsChange: (settings: DiffDisplaySettings) => void;
+  onFileCollapsedChange: (fileId: string, collapsed: boolean) => void;
+  onFoldExpand: (foldId: string) => void;
+  onFoldsExpand: (foldIds: readonly string[]) => void;
   onFileViewedToggle: (fileId: string) => void;
   onFileFilter: (value: string) => void;
   onPendingFilePathChange: (path: string) => void;
@@ -510,10 +566,13 @@ function ReadyTourPage({
     null;
 
   useEffect(() => {
-    if (mode === 'review' && typeof window !== 'undefined') {
-      window.scrollTo({ left: 0, top: 0, behavior: 'auto' });
-    }
-  }, [mode, selectedId]);
+    if (mode !== 'review' || pendingFilePath || typeof window === 'undefined') return;
+
+    resetReviewScrollPositions();
+    const frame = window.requestAnimationFrame(resetReviewScrollPositions);
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [mode, pendingFilePath, selectedId]);
 
   useEffect(() => {
     if (mode !== 'review' || !pendingFilePath || typeof window === 'undefined') return;
@@ -533,11 +592,16 @@ function ReadyTourPage({
     return <ShellMessage message="No chapters in this tour." />;
   }
 
-  const openReview = (chapter: ReviewChapter) => {
-    onSelectedIdChange(chapter.id);
+  const selectReviewChapter = (chapterId: string) => {
+    resetReviewScrollPositions();
+    onSelectedIdChange(chapterId);
     onFileFilter('');
     onPendingFilePathChange('');
-    onNavigate({ chapterId: chapter.id, mode: 'review' });
+    onNavigate({ chapterId, mode: 'review' });
+  };
+
+  const openReview = (chapter: ReviewChapter) => {
+    selectReviewChapter(chapter.id);
   };
 
   return mode === 'overview' ? (
@@ -555,11 +619,15 @@ function ReadyTourPage({
       chapterCompleted={reviewProgress.chapterIds.has(selectedChapter.id)}
       checkedReviewQuestionIds={reviewProgress.questionIds}
       comments={reviewComments}
+      diffFoldState={diffFoldState}
       diffSettings={diffSettings}
       fileFilter={fileFilter}
       onBack={() => onNavigate({ mode: 'overview' })}
       onChapterCompletedToggle={() => onChapterCompletedToggle(selectedChapter.id)}
       onDiffSettingsChange={onDiffSettingsChange}
+      onFileCollapsedChange={onFileCollapsedChange}
+      onFoldExpand={onFoldExpand}
+      onFoldsExpand={onFoldsExpand}
       onFileViewedToggle={onFileViewedToggle}
       onFileFilter={onFileFilter}
       onChapterSelect={openReview}
@@ -572,10 +640,7 @@ function ReadyTourPage({
         const next = index >= 0 ? chapters[index + 1] : undefined;
         if (!next) return;
 
-        onSelectedIdChange(next.id);
-        onFileFilter('');
-        onPendingFilePathChange('');
-        onNavigate({ chapterId: next.id, mode: 'review' });
+        selectReviewChapter(next.id);
       }}
       onPrevious={() => {
         const chapters = tour.tour.chapters;
@@ -583,10 +648,7 @@ function ReadyTourPage({
         const previous = index > 0 ? chapters[index - 1] : undefined;
         if (!previous) return;
 
-        onSelectedIdChange(previous.id);
-        onFileFilter('');
-        onPendingFilePathChange('');
-        onNavigate({ chapterId: previous.id, mode: 'review' });
+        selectReviewChapter(previous.id);
       }}
       onReviewQuestionCheckedToggle={onReviewQuestionCheckedToggle}
       onSearchOpen={onSearchOpen}
@@ -604,6 +666,10 @@ function getReviewCommentsStorageKey({ repoHash, tourId }: { repoHash: string; t
   return `${REVIEW_COMMENTS_STORAGE_PREFIX}:${repoHash}:${tourId}`;
 }
 
+function getDiffFoldStateStorageKey({ repoHash, tourId }: { repoHash: string; tourId: string }) {
+  return `${DIFF_FOLD_STATE_STORAGE_PREFIX}:${repoHash}:${tourId}`;
+}
+
 function getLegacyChapterProgressStorageKey({
   repoHash,
   tourId,
@@ -612,6 +678,18 @@ function getLegacyChapterProgressStorageKey({
   tourId: string;
 }) {
   return `${LEGACY_CHAPTER_PROGRESS_STORAGE_PREFIX}:${repoHash}:${tourId}`;
+}
+
+function resetReviewScrollPositions() {
+  if (typeof window === 'undefined') return;
+
+  window.scrollTo({ left: 0, top: 0, behavior: 'auto' });
+
+  for (const element of document.querySelectorAll<HTMLElement>(
+    '[data-left-pane-scroll], [data-diff-scroll-root]',
+  )) {
+    element.scrollTo({ left: 0, top: 0, behavior: 'auto' });
+  }
 }
 
 function handleCommandPaletteTarget({
@@ -630,6 +708,7 @@ function handleCommandPaletteTarget({
   tour: ReviewTour;
 }) {
   if (target.type === 'chapter') {
+    resetReviewScrollPositions();
     onSelectedIdChange(target.chapterId);
     onFileFilter('');
     onPendingFilePathChange('');
@@ -638,6 +717,7 @@ function handleCommandPaletteTarget({
   }
 
   if (target.type === 'question') {
+    resetReviewScrollPositions();
     onSelectedIdChange(target.chapterId);
     onFileFilter('');
     onPendingFilePathChange('');

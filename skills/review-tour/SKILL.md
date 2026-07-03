@@ -46,7 +46,7 @@ AI-authored viewer path is:
 
 ```bash
 review-tour collect --json
-review-tour write --draft <draft.json> --chapters <chapters.json> --open --json
+review-tour write --draft <draft.json> --chapters - --open --json
 ```
 
 Use the deterministic one-command path only as a fallback when AI chapter

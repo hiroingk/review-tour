@@ -27,6 +27,8 @@ This repo follows the same CLI + skill pattern as `vercel-labs/agent-browser`:
 - The CLI serves version-matched skill instructions with `review-tour skills get core`.
 - When the review workflow changes, update `skill-data/core/SKILL.md`; keep the stub short and stable.
 - Keep `skills/review-tour/agents/openai.yaml` aligned with the public skill name and purpose.
+- `skills-manifest.json` records a content hash per bundled skill and stub. Regenerate it with `pnpm run skills:manifest` after changing `skills/` or `skill-data/`; `pnpm run verify` fails when it is stale.
+- `pnpm run skills:lint` validates SKILL.md frontmatter and flags inline code patterns that trip agent permission checkers.
 
 Run `pnpm run skills:check` after changing `skills/`, `skill-data/`, or `review-tour skills`.
 
@@ -47,7 +49,35 @@ Useful checks:
 pnpm --filter @review-tour/cli build
 node bin/review-tour.js skills list
 node bin/review-tour.js skills get core
+node bin/review-tour.js doctor
 ```
+
+## Agent Conventions
+
+The CLI is primarily driven by coding agents. Preserve these contracts:
+
+- `--json` is supported on `collect`, `generate`, `write`, `open`, `gc`, `skills list`, `skills check`, and `doctor`. It is intentionally absent on `serve`, `update`, and `skills get`.
+- JSON goes to stdout only; human-readable errors go to stderr.
+- Exit codes: `0` success, `1` failure. Exceptions: `doctor --json` and `skills check --json` always exit `0`; consumers must read the `ok` field in the payload.
+- Paths in `--json` output are absolute local paths and are consumed programmatically by follow-up commands. Do not redact or rewrite them.
+- Output streams suppress `EPIPE`, so piping CLI output into `head` or a closed pipe is safe.
+- The CLI version reported in artifacts comes from the root `package.json` via `packages/cli/src/version.ts`. Never hardcode version strings in commands.
+
+## Local Hooks And Dead Code
+
+- `lefthook.yml` installs pre-commit hooks via the root `prepare` script: format and lint fixes on staged files, skill lint, and skills-manifest regeneration when skill files are staged. CI remains the source of truth.
+- `pnpm run knip` reports unused files, dependencies, and exports; it runs as part of `pnpm run verify`. Unused dependencies and files fail verification. Unused exports and types are currently warnings only; tighten them in `knip.json` once the existing report is cleaned up.
+- The UI primitives under `packages/viewer/src/components/ui` are intentionally excluded from knip; they are a kit that is broader than current usage.
+
+## Versioning And Release
+
+All packages share one version (fixed versioning):
+
+- Bump versions with `pnpm run set-version <version>`. It updates the root and every workspace package and prints the commit and tag commands.
+- Draft release notes with `pnpm run changelog:draft`.
+- Pushing a `v*` tag triggers `.github/workflows/publish.yml`, which verifies the tag matches `package.json`, runs `pnpm run verify`, and publishes to npm.
+- Pre-release versions (`-alpha.N`, `-beta.N`, `-rc.N`) publish under the matching npm dist-tag; stable versions publish as `latest`.
+- Publishing requires the `NPM_TOKEN` repository secret.
 
 ## Viewer Changes
 

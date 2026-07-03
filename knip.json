@@ -1,0 +1,29 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "ignoreBinaries": ["gh"],
+  "rules": {
+    "exports": "warn",
+    "types": "warn"
+  },
+  "workspaces": {
+    ".": {
+      "entry": ["scripts/*.mjs"],
+      "project": ["bin/**", "scripts/**"],
+      "ignoreDependencies": ["@review-tour/schema", "@review-tour/viewer"]
+    },
+    "packages/cli": {
+      "entry": ["test/*.test.js"],
+      "project": ["src/**", "test/**"]
+    },
+    "packages/schema": {
+      "entry": ["test/*.test.js"],
+      "project": ["src/**", "test/**"]
+    },
+    "packages/viewer": {
+      "entry": ["src/router.tsx", "src/routes/**/*.{ts,tsx}", "scripts/*.js", "test/*.test.js"],
+      "project": ["src/**", "scripts/**", "test/**"],
+      "ignore": ["src/components/ui/**"],
+      "ignoreDependencies": ["@tanstack/router-plugin"]
+    }
+  }
+}

@@ -29,6 +29,7 @@ import {
 } from '../reviewModel';
 import type { DiffDisplaySettings } from './diffSettings';
 import { fileDomId } from './dom';
+import { getCollapsedFileScrollTop } from './collapseScroll';
 import {
   createReviewComment,
   getReviewCommentLineKey,
@@ -102,21 +103,35 @@ const COMMENT_CARD_EDIT_HEIGHT = 176;
 const COMMENT_CARD_ROW_PADDING_Y = 16;
 const COMMENT_CARD_ROW_GAP = 8;
 
+type CollapseScrollTarget =
+  | { element: HTMLElement; kind: 'element'; top: number }
+  | { kind: 'window'; top: number };
+
 export function DiffViewer({
+  collapsedFileIds,
   comments,
+  expandedFoldIds,
   files,
   onCommentAdd,
   onCommentDelete,
   onCommentUpdate,
+  onFileCollapsedChange,
+  onFoldExpand,
+  onFoldsExpand,
   onFileViewedToggle,
   settings,
   viewedFileIds,
 }: {
+  collapsedFileIds: ReadonlySet<string>;
   comments: readonly ReviewComment[];
+  expandedFoldIds: ReadonlySet<string>;
   files: DiffFile[];
   onCommentAdd: (comment: ReviewComment) => void;
   onCommentDelete: (commentId: string) => void;
   onCommentUpdate: (commentId: string, body: string) => void;
+  onFileCollapsedChange: (fileId: string, collapsed: boolean) => void;
+  onFoldExpand: (foldId: string) => void;
+  onFoldsExpand: (foldIds: readonly string[]) => void;
   onFileViewedToggle: (fileId: string) => void;
   settings: DiffDisplaySettings;
   viewedFileIds: ReadonlySet<string>;
@@ -131,12 +146,17 @@ export function DiffViewer({
 
   return files.map((file) => (
     <FileDiff
+      collapsed={collapsedFileIds.has(file.id)}
       comments={comments.filter((comment) => comment.range.fileId === file.id)}
+      expandedFoldIds={expandedFoldIds}
       file={file}
       key={file.path}
       onCommentAdd={onCommentAdd}
       onCommentDelete={onCommentDelete}
       onCommentUpdate={onCommentUpdate}
+      onCollapsedChange={onFileCollapsedChange}
+      onFoldExpand={onFoldExpand}
+      onFoldsExpand={onFoldsExpand}
       onViewedToggle={onFileViewedToggle}
       settings={settings}
       viewed={viewedFileIds.has(file.id)}
@@ -145,20 +165,30 @@ export function DiffViewer({
 }
 
 function FileDiff({
+  collapsed,
   comments,
+  expandedFoldIds,
   file,
   onCommentAdd,
   onCommentDelete,
   onCommentUpdate,
+  onCollapsedChange,
+  onFoldExpand,
+  onFoldsExpand,
   onViewedToggle,
   settings,
   viewed,
 }: {
+  collapsed: boolean;
   comments: readonly ReviewComment[];
+  expandedFoldIds: ReadonlySet<string>;
   file: DiffFile;
   onCommentAdd: (comment: ReviewComment) => void;
   onCommentDelete: (commentId: string) => void;
   onCommentUpdate: (commentId: string, body: string) => void;
+  onCollapsedChange: (fileId: string, collapsed: boolean) => void;
+  onFoldExpand: (foldId: string) => void;
+  onFoldsExpand: (foldIds: readonly string[]) => void;
   onViewedToggle: (fileId: string) => void;
   settings: DiffDisplaySettings;
   viewed: boolean;
@@ -167,8 +197,6 @@ function FileDiff({
   const headerRef = useRef<HTMLElement>(null);
   const syntaxTheme = useResolvedSyntaxTheme(settings.syntaxTheme);
   const syntaxLines = useSyntaxLines(file, syntaxTheme);
-  const [collapsed, setCollapsed] = useState(false);
-  const [expandedFolds, setExpandedFolds] = useState<ReadonlySet<string>>(() => new Set());
   const [headerStuck, setHeaderStuck] = useState(false);
   const [activeSelection, setActiveSelection] = useState<LineSelection | null>(null);
   const [draftBody, setDraftBody] = useState('');
@@ -189,26 +217,86 @@ function FileDiff({
   );
   const stats = getFileStats(file);
   const visibleLineRefs = useMemo(
-    () => buildVisibleLineRefs(file, hunkRows, expandedFolds, settings.layout),
-    [expandedFolds, file, hunkRows, settings.layout],
+    () => buildVisibleLineRefs(file, hunkRows, expandedFoldIds, settings.layout),
+    [expandedFoldIds, file, hunkRows, settings.layout],
   );
   const selectionRange = activeSelection
     ? createSelectionRange(activeSelection.anchor, activeSelection.current, visibleLineRefs)
     : draftRange;
 
   const expandFold = (foldId: string) => {
-    setExpandedFolds((current) => {
-      if (current.has(foldId)) return current;
-
-      const next = new Set(current);
-      next.add(foldId);
-      return next;
-    });
+    if (!expandedFoldIds.has(foldId)) {
+      onFoldExpand(foldId);
+    }
   };
 
   const expandFullFile = () => {
-    setCollapsed(false);
-    setExpandedFolds(new Set(foldIds));
+    onCollapsedChange(file.id, false);
+    onFoldsExpand(foldIds);
+  };
+
+  const getCollapseScrollTarget = (): CollapseScrollTarget | null => {
+    const article = fileRef.current;
+    if (!article || typeof window === 'undefined') return null;
+
+    const scrollRoot = article.closest<HTMLElement>('[data-diff-scroll-root]');
+
+    if (
+      scrollRoot &&
+      (scrollRoot.scrollTop > 0 || scrollRoot.scrollHeight > scrollRoot.clientHeight + 1)
+    ) {
+      const top = getCollapsedFileScrollTop({
+        currentScrollTop: scrollRoot.scrollTop,
+        fileTop: article.getBoundingClientRect().top,
+        rootTop: scrollRoot.getBoundingClientRect().top,
+      });
+
+      return top === null ? null : { element: scrollRoot, kind: 'element', top };
+    }
+
+    const top = getCollapsedFileScrollTop({
+      currentScrollTop: window.scrollY,
+      fileTop: article.getBoundingClientRect().top,
+      rootTop: 0,
+    });
+
+    return top === null ? null : { kind: 'window', top };
+  };
+
+  const restoreCollapseScrollTarget = (target: CollapseScrollTarget | null) => {
+    if (!target || typeof window === 'undefined') return;
+
+    window.requestAnimationFrame(() => {
+      if (target.kind === 'element') {
+        target.element.scrollTo({ top: target.top });
+        return;
+      }
+
+      window.scrollTo({ top: target.top });
+    });
+  };
+
+  const collapseFile = () => {
+    const target = getCollapseScrollTarget();
+    onCollapsedChange(file.id, true);
+    restoreCollapseScrollTarget(target);
+  };
+
+  const toggleCollapsed = () => {
+    if (collapsed) {
+      onCollapsedChange(file.id, false);
+      return;
+    }
+
+    collapseFile();
+  };
+
+  const toggleViewed = () => {
+    if (!viewed && !collapsed) {
+      collapseFile();
+    }
+
+    onViewedToggle(file.id);
   };
 
   const startLineSelection = (
@@ -385,7 +473,7 @@ function FileDiff({
         >
           <FileHeaderIconAction
             ariaLabel={collapsed ? 'Expand file' : 'Collapse file'}
-            onClick={() => setCollapsed((value) => !value)}
+            onClick={toggleCollapsed}
             title={collapsed ? 'Expand file' : 'Collapse file'}
           >
             <AppIcon
@@ -414,7 +502,7 @@ function FileDiff({
           </div>
           <FileViewedToggle
             completed={viewed}
-            onToggle={() => onViewedToggle(file.id)}
+            onToggle={toggleViewed}
             title={viewed ? 'Mark file as not viewed' : 'Mark file as viewed'}
           />
         </div>
@@ -426,7 +514,7 @@ function FileDiff({
               comments={comments}
               draftBody={draftBody}
               draftRange={draftRange}
-              expandedFolds={expandedFolds}
+              expandedFolds={expandedFoldIds}
               header={hunk.header}
               hunkId={hunk.id}
               key={hunk.id}
@@ -692,20 +780,21 @@ function SplitPane({
 
           const line = side === 'left' ? row.left : row.right;
           const pairedLine = side === 'left' ? row.right : row.left;
-          const lineRef = line ? createLineRef(file, hunkId, side, line, index) : null;
+          const position = index;
+          const lineRef = line ? createLineRef(file, hunkId, side, line, position) : null;
           const lineCommentCount = lineRef ? countCommentsForLine(lineRef, comments) : 0;
           const lineComments = lineRef ? getCommentsEndingAtLine(lineRef, comments) : [];
           const oppositeCommentCount = countCommentsEndingAtPosition({
             comments,
             hunkId,
-            position: index,
+            position,
             side: side === 'left' ? 'right' : 'left',
           });
           const savedCommentSpacerCount = Math.max(0, oppositeCommentCount - lineComments.length);
           const renderDraftEditor = lineRef && draftRange && isRangeEndLine(lineRef, draftRange);
           const renderDraftSpacer =
             !renderDraftEditor && draftRange
-              ? shouldRenderSplitDraftSpacer({ draftRange, position: index, side })
+              ? shouldRenderSplitDraftSpacer({ draftRange, position, side })
               : false;
 
           return (
