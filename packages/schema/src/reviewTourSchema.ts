@@ -118,7 +118,8 @@ export type ReviewWarning = {
     | 'PATCH_TRUNCATED'
     | 'BASE_BRANCH_GUESSED'
     | 'UNCOMMITTED_CHANGES_INCLUDED'
-    | 'LLM_PARTIAL_COVERAGE';
+    | 'LLM_PARTIAL_COVERAGE'
+    | 'LARGE_HUNK_REUSED';
   message: string;
 };
 
@@ -146,6 +147,7 @@ const warningCodes = [
   'BASE_BRANCH_GUESSED',
   'UNCOMMITTED_CHANGES_INCLUDED',
   'LLM_PARTIAL_COVERAGE',
+  'LARGE_HUNK_REUSED',
 ] as const;
 
 export function validateReviewTour(value: unknown): ValidationResult<ReviewTour> {

@@ -7,6 +7,7 @@ import type { ReviewChapter, ReviewPrologue, ReviewTour } from '@review-tour/sch
 import { Button } from '#/components/ui/button';
 import { Card, CardPanel } from '#/components/ui/card';
 import { getChapterStats } from '../reviewModel';
+import { MarkdownInlineText, MarkdownText } from './MarkdownText';
 import { ThemeModeControl } from './theme';
 import {
   AppIcon,
@@ -67,14 +68,14 @@ export function TourOverview({
         <ThemeModeControl className="max-sm:col-span-2 max-sm:justify-self-start" />
       </header>
 
-      <div className="grid gap-6 px-6 py-3 max-sm:px-4 lg:min-h-0 lg:grid-cols-[minmax(390px,0.7fr)_minmax(640px,1.3fr)] lg:overflow-hidden">
+      <div className="grid gap-6 px-6 py-3 max-sm:px-4 lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:overflow-hidden">
         <aside className="min-w-0 lg:grid lg:min-h-0 lg:grid-rows-[auto_minmax(0,1fr)] lg:gap-y-1">
           <PanelHeading label="Prologue" />
           <Card className="min-h-0 overflow-auto rounded-[8px] border-0 bg-raised-strong p-6 text-fg shadow-[var(--shadow-panel)] before:rounded-[7px] before:shadow-[inset_0_1px_0_oklch(100%_0_0_/_4%)] max-lg:mt-1">
             <CardPanel className="min-h-full p-0">
               <section>
                 <SectionLabel>Why this PR?</SectionLabel>
-                <ReadableText
+                <MarkdownText
                   className="mt-3 grid gap-3 text-sm leading-[1.55] text-fg-secondary"
                   text={prologue.whyThisPr}
                 />
@@ -82,7 +83,7 @@ export function TourOverview({
 
               <section className="mt-6">
                 <SectionLabel>What it does</SectionLabel>
-                <ReadableText
+                <MarkdownText
                   className="mt-3 grid gap-3 text-sm leading-[1.55] text-fg-secondary"
                   text={prologue.whatItDoes}
                 />
@@ -105,7 +106,7 @@ export function TourOverview({
                           {chapter.title}
                         </strong>
                         <span className="mt-1 block text-[13px] leading-[1.45] text-fg-muted">
-                          {chapter.summary}
+                          <MarkdownInlineText text={chapter.summary} />
                         </span>
                       </span>
                     </li>
@@ -173,7 +174,7 @@ function ReviewFocus({ items }: { items: ReviewPrologue['reviewFocus'] }) {
                 {getFileName(item.path)}
               </span>
             ) : null}
-            <ReadableText
+            <MarkdownText
               className="grid gap-2 text-[13px] leading-[1.45] text-fg-secondary"
               text={item.summary}
             />
@@ -210,75 +211,8 @@ function ChapterOverviewStats({
   );
 }
 
-function ReadableText({ className, text }: { className: string; text: string }) {
-  return (
-    <div className={`${className} text-pretty`}>
-      {getReadableParagraphs(text).map((paragraph, index) => (
-        <p className="whitespace-pre-line" key={`${index}:${paragraph.slice(0, 24)}`}>
-          {paragraph}
-        </p>
-      ))}
-    </div>
-  );
-}
-
-function getReadableParagraphs(text: string) {
-  const normalized = text.trim();
-  if (!normalized) return [];
-
-  if (normalized.includes('\n') || normalized.length <= 180) {
-    return normalized
-      .split(/\n\s*\n/)
-      .map((paragraph) => paragraph.trim())
-      .filter(Boolean);
-  }
-
-  const sentences = splitSentences(normalized);
-  return sentences.length <= 1 ? [normalized] : groupSentences(sentences);
-}
-
 function getFileName(path: string) {
   return path.split(/[\\/]/).filter(Boolean).at(-1) ?? path;
-}
-
-function splitSentences(value: string) {
-  return (value.match(/[^.!?。！？]+[.!?。！？]+(?:["')\]]+)?|[^.!?。！？]+$/g) ?? [value])
-    .map((sentence) => sentence.trim())
-    .filter(Boolean);
-}
-
-function groupSentences(sentences: string[]) {
-  const paragraphs: string[] = [];
-  let current: string[] = [];
-  let currentLength = 0;
-
-  for (const sentence of sentences) {
-    if (current.length > 0 && (current.length >= 2 || currentLength + sentence.length > 180)) {
-      paragraphs.push(joinSentences(current));
-      current = [];
-      currentLength = 0;
-    }
-
-    current.push(sentence);
-    currentLength += sentence.length;
-  }
-
-  if (current.length > 0) {
-    paragraphs.push(joinSentences(current));
-  }
-
-  return paragraphs;
-}
-
-function joinSentences(sentences: string[]) {
-  return sentences.reduce((result, sentence) => {
-    if (!result) return sentence;
-    return `${result}${needsSentenceSpace(result, sentence) ? ' ' : ''}${sentence}`;
-  }, '');
-}
-
-function needsSentenceSpace(previous: string, next: string) {
-  return /[A-Za-z0-9)"'\]]$/.test(previous) && /^[A-Za-z0-9("'[]/.test(next);
 }
 
 function getOverviewPrologue(tour: ReviewTour): ReviewPrologue {

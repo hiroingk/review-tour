@@ -42,6 +42,46 @@ test('returns only diff hunks selected by the chapter', () => {
   expect(files[0].hunks.map((hunk) => hunk.id)).toEqual(['hunk_b']);
 });
 
+test('follows chapter file and hunk order when provided', () => {
+  const tour = {
+    diff: {
+      files: [
+        {
+          id: 'file_test',
+          path: 'service.test.ts',
+          status: 'modified',
+          additions: 1,
+          deletions: 0,
+          hunks: [{ id: 'hunk_test', lines: [] }],
+        },
+        {
+          id: 'file_service',
+          path: 'service.ts',
+          status: 'modified',
+          additions: 2,
+          deletions: 0,
+          hunks: [
+            { id: 'hunk_late', lines: [] },
+            { id: 'hunk_entry', lines: [] },
+          ],
+        },
+      ],
+    },
+  };
+  const chapter = {
+    hunkIds: ['hunk_test', 'hunk_entry'],
+    files: [
+      { path: 'service.ts', hunkIds: ['hunk_entry', 'hunk_late'] },
+      { path: 'service.test.ts', hunkIds: ['hunk_test'] },
+    ],
+  };
+
+  const files = getChapterDiffFiles(tour, chapter);
+
+  expect(files.map((file) => file.path)).toEqual(['service.ts', 'service.test.ts']);
+  expect(files[0].hunks.map((hunk) => hunk.id)).toEqual(['hunk_entry', 'hunk_late']);
+});
+
 test('keeps folded context rows available for expansion', () => {
   const lines = Array.from({ length: 14 }, (_, index) => ({
     type: 'context',

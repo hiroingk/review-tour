@@ -105,6 +105,21 @@ describe('review tour schema', () => {
     expect(result.ok).toBe(true);
   });
 
+  test('validates large reused hunk warnings', () => {
+    const result = validateReviewTour(
+      createTour({
+        warnings: [
+          {
+            code: 'LARGE_HUNK_REUSED',
+            message: 'Large hunk hunk_abc is assigned to multiple chapters.',
+          },
+        ],
+      }),
+    );
+
+    expect(result.ok).toBe(true);
+  });
+
   test('rejects an invalid schema version', () => {
     const result = validateReviewTour(createTour({ schemaVersion: 'bad' }));
     expect(result.ok).toBe(false);

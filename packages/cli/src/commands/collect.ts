@@ -13,7 +13,9 @@ import {
   type PullRequestInfo,
 } from '../github/pullRequest.js';
 
-const version = '0.0.0';
+import { getCliVersion } from '../version.js';
+
+const version = getCliVersion();
 
 export async function collectCommand(args: ParsedArgs) {
   const draft = collectDraft(args);

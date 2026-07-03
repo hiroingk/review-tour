@@ -27,6 +27,22 @@ export type ExpandableSplitFoldRow = SplitFoldRow & {
 export type ExpandableSplitRow = SplitLineRow | ExpandableSplitFoldRow;
 
 export function getChapterDiffFiles(tour: ReviewTour, chapter: ReviewChapter): DiffFile[] {
+  if (Array.isArray(chapter.files) && chapter.files.length > 0) {
+    const filesByPath = new Map(tour.diff.files.map((file) => [file.path, file]));
+
+    return chapter.files.flatMap((fileRef) => {
+      const file = filesByPath.get(fileRef.path);
+      if (!file) return [];
+
+      const hunksById = new Map(file.hunks.map((hunk) => [hunk.id, hunk]));
+      const hunks = fileRef.hunkIds
+        .map((hunkId) => hunksById.get(hunkId))
+        .filter((hunk): hunk is DiffFile['hunks'][number] => hunk !== undefined);
+
+      return hunks.length > 0 ? [{ ...file, hunks }] : [];
+    });
+  }
+
   const hunkIdSet = new Set(chapter.hunkIds);
   return tour.diff.files
     .map((file) => ({

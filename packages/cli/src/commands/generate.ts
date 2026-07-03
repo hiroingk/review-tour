@@ -11,7 +11,9 @@ import { collectDraft } from './collect.js';
 import { launchViewer } from './open.js';
 import { createFallbackPrologue } from './prologue.js';
 
-const version = '0.0.0';
+import { getCliVersion } from '../version.js';
+
+const version = getCliVersion();
 
 export async function generateCommand(args: ParsedArgs) {
   const draft = collectDraft(args);

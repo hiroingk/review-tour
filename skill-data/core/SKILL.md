@@ -12,6 +12,21 @@ chapters, store the artifact in the OS cache, and open the localhost browser UI.
 Use a chat-only review only when the user explicitly asks for an explanation in
 the chat, text, or "this conversation" instead of opening the viewer.
 
+## Routing
+
+Read only the sections you need for the current step:
+
+| Goal                                           | Section                             |
+| ---------------------------------------------- | ----------------------------------- |
+| Confirm the CLI is installed and healthy       | CLI Availability                    |
+| Decide between viewer and chat output          | Choose The Output Mode              |
+| Build the default AI-authored viewer tour      | Viewer Workflow                     |
+| Recover when chapter generation fails          | Deterministic Fallback              |
+| Author the chapters payload                    | Chapter JSON Shape                  |
+| Explain the diff in chat instead               | Chat-Only Workflow                  |
+| Understand storage paths and URLs              | Artifact Contract                   |
+| Understand validation and security constraints | Validation Contract, Security Rules |
+
 ## Core Rules
 
 - Do not modify source code in the target repository.
@@ -21,7 +36,7 @@ the chat, text, or "this conversation" instead of opening the viewer.
 - Use existing hunk IDs when writing viewer chapters.
 - Do not invent line numbers or hunk IDs.
 - Do not create a custom static HTML review page, `.review-tour.json`, Markdown artifact, or any other substitute viewer artifact when the `review-tour` CLI is unavailable.
-- Open the viewer in the Codex right-pane browser when browser control is available; otherwise return the localhost URL.
+- Use the CLI `--open` path for the viewer, then return the localhost URL and artifact path.
 - Use the user's language for summaries, chapter titles, and review questions.
 
 ## CLI Availability
@@ -30,8 +45,13 @@ Before using viewer mode, confirm that the official CLI is available:
 
 ```bash
 command -v review-tour
-review-tour --help
+review-tour doctor --json
 ```
+
+`review-tour doctor --json` reports Node.js, git, cache directory, skill data,
+and GitHub CLI status in one machine-readable payload. It always exits 0 with
+`--json`; read the `ok` field and the per-check `status` values instead of the
+exit code.
 
 If `review-tour` is not found or fails to start, stop and tell the user to
 install or relink the CLI:
@@ -84,15 +104,10 @@ path, because it only creates deterministic file-based chapters.
    - only unstaged changes: `working-tree`
    - only staged changes: `staged`
    - user-specified mode wins
-3. Run the deterministic CLI collector:
+3. Run the deterministic CLI collector once for the inferred diff mode. Use explicit flags for PRs and branch diffs; use bare `review-tour collect --json` only when the default working-tree/staged behavior is the intended scope.
 
 ```bash
 review-tour collect --json
-```
-
-Use explicit flags when needed:
-
-```bash
 review-tour collect --pr https://github.com/owner/repo/pull/123 --json
 review-tour collect --base origin/main --head HEAD --mode base...head --json
 review-tour collect --mode working-tree --json
@@ -107,19 +122,36 @@ review-tour collect --mode staged --json
    - use blank-line paragraph breaks in `prologue.reviewFocus[].summary` when one focus item needs more than one idea
    - make `prologue.reviewFocus` list the highest-value review concerns, each with a title, optional file path, and concrete thing to verify
    - order chapters by reviewer comprehension, not file order
+   - when possible, order chapters by the processing flow a human reviewer would trace: entrypoint or user-facing surface, input parsing or validation, core behavior and data flow, state changes or external effects, outputs and error paths, then supporting tests or configuration
+   - group hunks across files into the same chapter when they are part of one behavior step; do not split by directory, layer, or file type if that hides the flow
+   - place setup, schema, migration, or configuration chapters before behavior only when they are necessary to understand the runtime flow; otherwise place them after the behavior they support
    - use 3 to 7 chapters for normal diffs
    - place tests after the behavior they protect
    - raise risk for public API, auth, payment, data mutation, migrations, async workflows, or persistence changes
    - include every hunk ID at least once unless the draft already marks it skipped
+   - order `hunkIds` inside each chapter in the same sequence the reviewer should see the code, because the viewer uses that order to derive displayed files and hunks
+   - assign each hunk to one primary chapter by default; reuse a hunk only when the same code must be inspected in multiple chapters
+   - avoid reusing very large mixed-scope hunks across chapters; when a large hunk contains several concerns, assign it to one primary chapter and point reviewers to related behavior in the summary or review questions
    - include concrete review questions that help the user inspect risky behavior
-6. Write a chapters JSON file with only existing hunk IDs.
+6. Create a chapters JSON payload with only existing hunk IDs.
 7. Run:
 
 ```bash
-review-tour write --draft <draft.json> --chapters <chapters.json> --open --json
+review-tour write --draft <draft.json> --chapters - --open --json <<'JSON'
+{
+  "title": "...",
+  "summary": "...",
+  "prologue": {
+    "whyThisPr": "...",
+    "whatItDoes": "...",
+    "reviewFocus": []
+  },
+  "chapters": []
+}
+JSON
 ```
 
-8. Open the returned URL in the right-pane browser when available.
+8. If the viewer did not open automatically and a browser-control tool is already available, open the returned URL there. Do not spend extra steps discovering browser tools just to display the viewer.
 9. Return the URL and artifact path briefly.
 
 ## Deterministic Fallback
@@ -174,7 +206,7 @@ Use this path only when the user explicitly asks for a chat response.
 1. Inspect the repository before explaining. Prefer `git diff --name-status`, `git diff --stat`, `git diff --numstat`, `git log`, `rg`, and targeted file reads.
 2. Determine the scope: current working tree, current branch, named branch, PR-like diff, or specific feature path.
 3. Infer the base branch from repo conventions when the user does not specify it.
-4. Build an overview first, then ordered chapters anchored to verified files and line numbers.
+4. Build an overview first, then ordered chapters that follow reviewer comprehension and processing flow, anchored to verified files and line numbers.
 5. Prefer a review-oriented narrative over a flat file list.
 6. Clearly label inferred background when no issue, PR description, or design doc is available.
 

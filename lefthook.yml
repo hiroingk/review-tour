@@ -1,0 +1,14 @@
+# Pre-commit hooks. Installed via the root package.json prepare script.
+# CI remains the source of truth; these hooks catch problems before push.
+pre-commit:
+  parallel: false
+  commands:
+    format:
+      glob: '*.{js,mjs,ts,tsx,json,md,css,yml,yaml}'
+      run: pnpm exec vp check --fix --no-error-on-unmatched-pattern {staged_files} && git add {staged_files}
+    skills-lint:
+      glob: '{skills,skill-data}/**'
+      run: node scripts/lint-skills.mjs
+    skills-manifest:
+      glob: '{skills,skill-data}/**'
+      run: node scripts/generate-skills-manifest.mjs && git add skills-manifest.json

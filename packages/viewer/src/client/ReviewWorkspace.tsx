@@ -45,8 +45,10 @@ import { toastManager } from '#/components/ui/toast';
 import { ToggleGroup, ToggleGroupItem } from '#/components/ui/toggle-group';
 import { getChapterDiffFiles, getChapterStats, getFileStats } from '../reviewModel';
 import type { DiffDisplaySettings } from './diffSettings';
+import type { DiffFoldState } from './diffFoldState';
 import { fileDomId } from './dom';
 import { DiffViewer } from './DiffViewer';
+import { MarkdownInlineText, MarkdownText } from './MarkdownText';
 import {
   formatReviewCommentsForCodex,
   getReviewCommentLineLabel,
@@ -72,6 +74,7 @@ export function ReviewWorkspace({
   chapterCompleted,
   checkedReviewQuestionIds,
   comments,
+  diffFoldState,
   diffSettings,
   fileFilter,
   onBack,
@@ -80,6 +83,9 @@ export function ReviewWorkspace({
   onCommentDelete,
   onCommentUpdate,
   onDiffSettingsChange,
+  onFileCollapsedChange,
+  onFoldExpand,
+  onFoldsExpand,
   onFileViewedToggle,
   onFileFilter,
   onNext,
@@ -94,6 +100,7 @@ export function ReviewWorkspace({
   chapterCompleted: boolean;
   checkedReviewQuestionIds: ReadonlySet<string>;
   comments: readonly ReviewComment[];
+  diffFoldState: DiffFoldState;
   diffSettings: DiffDisplaySettings;
   fileFilter: string;
   onBack: () => void;
@@ -102,6 +109,9 @@ export function ReviewWorkspace({
   onCommentDelete: (commentId: string) => void;
   onCommentUpdate: (commentId: string, body: string) => void;
   onDiffSettingsChange: (settings: DiffDisplaySettings) => void;
+  onFileCollapsedChange: (fileId: string, collapsed: boolean) => void;
+  onFoldExpand: (foldId: string) => void;
+  onFoldsExpand: (foldIds: readonly string[]) => void;
   onFileViewedToggle: (fileId: string) => void;
   onFileFilter: (value: string) => void;
   onNext: () => void;
@@ -251,7 +261,10 @@ export function ReviewWorkspace({
               </div>
             </div>
 
-            <p className="mt-8 text-sm leading-[1.55] text-fg-muted">{chapter.summary}</p>
+            <MarkdownText
+              className="mt-8 grid gap-3 text-sm leading-[1.55] text-fg-muted"
+              text={chapter.summary}
+            />
 
             <SideBlock title="Review questions">
               {chapter.reviewQuestions.length ? (
@@ -266,7 +279,9 @@ export function ReviewWorkspace({
                             className="mt-0.5 border-line bg-control data-checked:border-add data-checked:bg-add"
                             onCheckedChange={() => onReviewQuestionCheckedToggle(questionId)}
                           />
-                          <span>{question}</span>
+                          <span className="min-w-0">
+                            <MarkdownInlineText text={question} />
+                          </span>
                         </Label>
                       </li>
                     );
@@ -340,11 +355,16 @@ export function ReviewWorkspace({
         >
           {activeTab === 'chapters' ? (
             <DiffViewer
+              collapsedFileIds={diffFoldState.collapsedFileIds}
               comments={comments}
+              expandedFoldIds={diffFoldState.expandedFoldIds}
               files={visibleFiles}
               onCommentAdd={onCommentAdd}
               onCommentDelete={onCommentDelete}
               onCommentUpdate={onCommentUpdate}
+              onFileCollapsedChange={onFileCollapsedChange}
+              onFoldExpand={onFoldExpand}
+              onFoldsExpand={onFoldsExpand}
               onFileViewedToggle={onFileViewedToggle}
               settings={diffSettings}
               viewedFileIds={viewedFileIds}

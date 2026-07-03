@@ -9,18 +9,26 @@ import {
   type ReviewWarning,
 } from '@review-tour/schema';
 import { getNumberOption, getStringOption, hasFlag, type ParsedArgs } from '../cliArgs.js';
-import { readJsonFile } from '../artifact/readJson.js';
+import { readJsonInput } from '../artifact/readJson.js';
 import { writeArtifact } from '../artifact/store.js';
 import { launchViewer } from './open.js';
 import { createFallbackPrologue, normalizePrologue } from './prologue.js';
 
-const version = '0.0.0';
+import { getCliVersion } from '../version.js';
+
+const version = getCliVersion();
+const LARGE_REUSED_HUNK_LINE_THRESHOLD = 200;
 
 type ChaptersPayload = {
   title?: string;
   summary?: string;
   prologue?: ReviewPrologue;
   chapters: ReviewChapter[];
+};
+
+type HunkInfo = {
+  lineCount: number;
+  path: string;
 };
 
 export async function writeCommand(args: ParsedArgs) {
@@ -32,12 +40,15 @@ export async function writeCommand(args: ParsedArgs) {
   if (!chaptersPath) {
     throw new Error('Missing required --chapters <path>.');
   }
+  if (draftPath === '-' && chaptersPath === '-') {
+    throw new Error('Only one of --draft or --chapters can read from stdin.');
+  }
 
-  const draftJson = await readJsonFile(draftPath);
+  const draftJson = await readJsonInput(draftPath);
   assertReviewTourDraft(draftJson);
   const draft = draftJson;
 
-  const chaptersPayload = parseChaptersPayload(await readJsonFile(chaptersPath));
+  const chaptersPayload = parseChaptersPayload(await readJsonInput(chaptersPath));
   const chapters = normalizeAndRepairChapters(draft, chaptersPayload.chapters);
   const summary =
     chaptersPayload.summary ??
@@ -113,8 +124,8 @@ function parseChaptersPayload(input: unknown): ChaptersPayload {
 }
 
 function normalizeAndRepairChapters(draft: ReviewTourDraft, chapters: ReviewChapter[]) {
-  const hunkToPath = createHunkPathMap(draft);
-  const knownHunks = new Set(hunkToPath.keys());
+  const hunkInfo = createHunkInfoMap(draft);
+  const knownHunks = new Set(hunkInfo.keys());
   const normalized = chapters.map((chapter, index) => {
     const hunkIds = [...new Set(chapter.hunkIds)];
     if (hunkIds.length === 0) {
@@ -130,49 +141,107 @@ function normalizeAndRepairChapters(draft: ReviewTourDraft, chapters: ReviewChap
       ...chapter,
       index: chapter.index || index + 1,
       hunkIds,
-      files: createChapterFiles(hunkIds, hunkToPath),
+      files: createChapterFiles({ hunkIds, hunkInfo }),
     };
   });
 
   const covered = new Set(normalized.flatMap((chapter) => chapter.hunkIds));
   const missing = [...knownHunks].filter((hunkId) => !covered.has(hunkId));
   if (missing.length > 0) {
-    normalized.push(createFallbackChapter(normalized.length + 1, missing, hunkToPath));
+    normalized.push(createFallbackChapter(normalized.length + 1, missing, hunkInfo));
   }
 
   return normalized;
 }
 
-function repairWarnings(
+export function repairWarnings(
   warnings: ReviewWarning[],
   chapters: ReviewChapter[],
   draft: ReviewTourDraft,
 ): ReviewWarning[] {
+  const repairedWarnings = [...warnings];
   const allHunks = getAllHunkIds(draft);
   const covered = new Set(chapters.flatMap((chapter) => chapter.hunkIds));
   const hasMissing = allHunks.some((hunkId) => !covered.has(hunkId));
   const repairedByFallback = chapters.some((chapter) => chapter.id === 'chapter_uncovered_hunks');
 
-  if (!hasMissing && !repairedByFallback) {
-    return warnings;
+  if (
+    (hasMissing || repairedByFallback) &&
+    !repairedWarnings.some((warning) => warning.code === 'LLM_PARTIAL_COVERAGE')
+  ) {
+    repairedWarnings.push({
+      code: 'LLM_PARTIAL_COVERAGE',
+      message: 'Some hunks were not assigned to chapters; a fallback chapter was added.',
+    });
   }
 
-  if (warnings.some((warning) => warning.code === 'LLM_PARTIAL_COVERAGE')) {
-    return warnings;
+  if (!repairedWarnings.some((warning) => warning.code === 'LARGE_HUNK_REUSED')) {
+    const repeatedLargeHunks = getRepeatedLargeHunks({ chapters, draft });
+    if (repeatedLargeHunks.length > 0) {
+      const details = repeatedLargeHunks
+        .slice(0, 4)
+        .map(
+          (hunk) =>
+            `${hunk.path} ${hunk.id} (${hunk.lineCount} lines, ${hunk.chapterCount} chapters)`,
+        );
+      const extraCount = repeatedLargeHunks.length - details.length;
+      const suffix = extraCount > 0 ? `, and ${extraCount} more` : '';
+
+      repairedWarnings.push({
+        code: 'LARGE_HUNK_REUSED',
+        message: `Large hunks are assigned to multiple chapters: ${details.join('; ')}${suffix}. Prefer one primary chapter and reference related behavior in summaries or review questions.`,
+      });
+    }
   }
 
-  const coverageWarning: ReviewWarning = {
-    code: 'LLM_PARTIAL_COVERAGE',
-    message: 'Some hunks were not assigned to chapters; a fallback chapter was added.',
-  };
+  return repairedWarnings;
+}
 
-  return [...warnings, coverageWarning];
+function getRepeatedLargeHunks({
+  chapters,
+  draft,
+}: {
+  chapters: ReviewChapter[];
+  draft: ReviewTourDraft;
+}) {
+  const hunkToFile = new Map<string, { lineCount: number; path: string }>();
+  for (const file of draft.diff.files) {
+    for (const hunk of file.hunks) {
+      hunkToFile.set(hunk.id, { lineCount: hunk.lines.length, path: file.path });
+    }
+  }
+
+  const chapterIdsByHunk = new Map<string, Set<string>>();
+  for (const chapter of chapters) {
+    for (const hunkId of new Set(chapter.hunkIds)) {
+      const chapterIds = chapterIdsByHunk.get(hunkId) ?? new Set<string>();
+      chapterIds.add(chapter.id);
+      chapterIdsByHunk.set(hunkId, chapterIds);
+    }
+  }
+
+  return [...chapterIdsByHunk.entries()]
+    .flatMap(([hunkId, chapterIds]) => {
+      const hunk = hunkToFile.get(hunkId);
+      if (!hunk) return [];
+      if (chapterIds.size <= 1 || hunk.lineCount < LARGE_REUSED_HUNK_LINE_THRESHOLD) return [];
+
+      return [
+        {
+          chapterCount: chapterIds.size,
+          id: hunkId,
+          lineCount: hunk.lineCount,
+          path: hunk.path,
+        },
+      ];
+    })
+    .sort((a, b) => b.lineCount - a.lineCount);
 }
 
 function createFallbackChapter(
   index: number,
   hunkIds: string[],
-  hunkToPath: Map<string, string>,
+  hunkInfo: Map<string, HunkInfo>,
 ): ReviewChapter {
   return {
     id: 'chapter_uncovered_hunks',
@@ -183,20 +252,24 @@ function createFallbackChapter(
     rationale: 'Every hunk must be reviewable, so the CLI grouped the uncovered hunks here.',
     reviewQuestions: ['Do these uncovered hunks need their own review chapter?'],
     hunkIds,
-    files: createChapterFiles(hunkIds, hunkToPath),
+    files: createChapterFiles({ hunkIds, hunkInfo }),
   };
 }
 
-function createChapterFiles(
-  hunkIds: string[],
-  hunkToPath: Map<string, string>,
-): ReviewChapter['files'] {
+function createChapterFiles({
+  hunkIds,
+  hunkInfo,
+}: {
+  hunkIds: string[];
+  hunkInfo: Map<string, HunkInfo>;
+}): ReviewChapter['files'] {
   const byPath = new Map<string, string[]>();
   for (const hunkId of hunkIds) {
-    const filePath = hunkToPath.get(hunkId);
-    if (!filePath) {
+    const info = hunkInfo.get(hunkId);
+    if (!info) {
       continue;
     }
+    const filePath = info.path;
     const existing = byPath.get(filePath) ?? [];
     existing.push(hunkId);
     byPath.set(filePath, existing);
@@ -208,14 +281,14 @@ function createChapterFiles(
   }));
 }
 
-function createHunkPathMap(draft: ReviewTourDraft) {
-  const hunkToPath = new Map<string, string>();
+function createHunkInfoMap(draft: ReviewTourDraft) {
+  const hunkInfo = new Map<string, HunkInfo>();
   for (const file of draft.diff.files) {
     for (const hunk of file.hunks) {
-      hunkToPath.set(hunk.id, file.path);
+      hunkInfo.set(hunk.id, { lineCount: hunk.lines.length, path: file.path });
     }
   }
-  return hunkToPath;
+  return hunkInfo;
 }
 
 function getAllHunkIds(draft: ReviewTourDraft) {
