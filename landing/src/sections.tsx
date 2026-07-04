@@ -113,9 +113,9 @@ function SkillInstallCommand() {
 
   return (
     <div className="flex max-w-full items-center gap-4 rounded-full bg-lp-panel py-2.5 pr-2.5 pl-6 shadow-[0_0_0_1px_oklch(100%_0_0_/_12%)]">
-      <code className="min-w-0 font-mono text-[14px] break-all text-lp-fg md:text-[15px]">
-        <span className="select-none text-lp-fg-muted">$ </span>
-        {SKILL_COMMAND}
+      <code className="flex min-w-0 gap-[1ch] font-mono text-[14px] text-lp-fg md:text-[15px]">
+        <span className="select-none text-lp-fg-muted">$</span>
+        <span className="min-w-0 break-all">{SKILL_COMMAND}</span>
       </code>
       <button
         className="lp-pill lp-pill-primary shrink-0 !px-5 !py-2.5 text-[13px]"
