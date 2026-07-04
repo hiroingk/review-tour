@@ -1,4 +1,4 @@
-import { ProductDemo } from './demo/ProductDemo';
+import { ResponsiveDemo } from './demo/ResponsiveDemo';
 import { ChaptersMock, QuestionsMock } from './mocks';
 import {
   FeaturePanel,
@@ -17,7 +17,7 @@ export function App() {
     <div className="min-h-screen bg-lp-canvas text-lp-fg antialiased">
       <Nav />
       <main>
-        <Hero demo={<ProductDemo />} />
+        <Hero demo={<ResponsiveDemo />} />
         <SurfacesRow />
         <section className="lp-container flex flex-col gap-4 pt-16" id="features">
           <FeaturePanel
