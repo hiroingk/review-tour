@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { ProductDemo } from './ProductDemo';
 
 /* The desktop viewport rendered inside the iframe: 4px top padding + 44px title bar +
-   680px workspace + 40px bottom padding for the terminal overlay. */
-const DEMO_STAGE_WIDTH = 1180;
+   680px workspace + 40px bottom padding for the terminal overlay. The width is the
+   narrowest viewport that still renders the desktop (lg) workspace layout, so the
+   scaled-down preview stays as legible as possible. */
+const DEMO_STAGE_WIDTH = 1024;
 const DEMO_STAGE_HEIGHT = 768;
 
 /**

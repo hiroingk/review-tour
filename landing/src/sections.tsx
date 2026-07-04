@@ -87,7 +87,7 @@ export function Hero({ demo }: { demo: ReactNode }) {
       </div>
       <div className="mt-14 md:mt-16" id="demo">
         <div
-          className="rounded-2xl p-3 shadow-[inset_0_0_0_1px_oklch(100%_0_0_/_8%)] sm:p-6 md:p-10"
+          className="-mx-5 p-2 shadow-[inset_0_0_0_1px_oklch(100%_0_0_/_8%)] md:mx-0 md:rounded-2xl md:p-10"
           style={{
             backgroundImage: `url(${heroBg})`,
             backgroundSize: 'cover',
