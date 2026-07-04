@@ -1,0 +1,27 @@
+{
+  "name": "@review-tour/landing",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Marketing landing page for Review Tour. Embeds the real viewer components.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "build": "vp build --config ./vite.config.ts",
+    "dev": "vp dev --config ./vite.config.ts",
+    "lint": "vp check --no-fmt",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@review-tour/schema": "workspace:*",
+    "@tailwindcss/vite": "^4.3.1",
+    "@vitejs/plugin-react": "^6.0.3",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "tailwindcss": "^4.3.1",
+    "vite": "catalog:"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3"
+  }
+}

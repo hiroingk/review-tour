@@ -32,7 +32,7 @@ export default defineConfig({
   }),
 });
 
-function stripHugeiconsPureArrayAnnotations() {
+export function stripHugeiconsPureArrayAnnotations() {
   return {
     name: 'review-tour:strip-hugeicons-pure-array-annotations',
     enforce: 'pre' as const,

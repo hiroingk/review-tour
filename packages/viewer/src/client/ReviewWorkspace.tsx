@@ -354,21 +354,25 @@ export function ReviewWorkspace({
           data-diff-scroll-root={activeTab === 'chapters' ? '' : undefined}
         >
           {activeTab === 'chapters' ? (
-            <DiffViewer
-              collapsedFileIds={diffFoldState.collapsedFileIds}
-              comments={comments}
-              expandedFoldIds={diffFoldState.expandedFoldIds}
-              files={visibleFiles}
-              onCommentAdd={onCommentAdd}
-              onCommentDelete={onCommentDelete}
-              onCommentUpdate={onCommentUpdate}
-              onFileCollapsedChange={onFileCollapsedChange}
-              onFoldExpand={onFoldExpand}
-              onFoldsExpand={onFoldsExpand}
-              onFileViewedToggle={onFileViewedToggle}
-              settings={diffSettings}
-              viewedFileIds={viewedFileIds}
-            />
+            /* Top spacing lives on this inner wrapper instead of the scroll container so the
+               sticky file headers stay flush with the scrollport edge while scrolling. */
+            <div className="pt-7 max-lg:pt-5">
+              <DiffViewer
+                collapsedFileIds={diffFoldState.collapsedFileIds}
+                comments={comments}
+                expandedFoldIds={diffFoldState.expandedFoldIds}
+                files={visibleFiles}
+                onCommentAdd={onCommentAdd}
+                onCommentDelete={onCommentDelete}
+                onCommentUpdate={onCommentUpdate}
+                onFileCollapsedChange={onFileCollapsedChange}
+                onFoldExpand={onFoldExpand}
+                onFoldsExpand={onFoldsExpand}
+                onFileViewedToggle={onFileViewedToggle}
+                settings={diffSettings}
+                viewedFileIds={viewedFileIds}
+              />
+            </div>
           ) : (
             <ReviewCommentsView
               comments={comments}

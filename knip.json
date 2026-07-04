@@ -11,6 +11,11 @@
       "project": ["bin/**", "scripts/**"],
       "ignoreDependencies": ["@review-tour/schema", "@review-tour/viewer"]
     },
+    "landing": {
+      "entry": ["src/main.tsx"],
+      "project": ["src/**"],
+      "ignoreDependencies": ["tailwindcss"]
+    },
     "packages/cli": {
       "entry": ["test/*.test.js"],
       "project": ["src/**", "test/**"]
