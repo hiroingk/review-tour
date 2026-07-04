@@ -80,7 +80,7 @@ export function Hero({ demo }: { demo: ReactNode }) {
         Review Tour turns pull requests into stories you can actually review.
       </h1>
       <div className="mt-8 flex flex-col items-start gap-3">
-        <HeroInstallCommand />
+        <SkillInstallCommand />
         <p className="text-sm text-lp-fg-muted">
           Free and open source. No sign-up — everything runs on your machine.
         </p>
@@ -101,7 +101,7 @@ export function Hero({ demo }: { demo: ReactNode }) {
   );
 }
 
-function HeroInstallCommand() {
+function SkillInstallCommand() {
   const [copied, setCopied] = useState(false);
 
   const copy = () => {
@@ -113,7 +113,7 @@ function HeroInstallCommand() {
 
   return (
     <div className="flex max-w-full items-center gap-4 rounded-full bg-lp-panel py-2.5 pr-2.5 pl-6 shadow-[0_0_0_1px_oklch(100%_0_0_/_12%)]">
-      <code className="truncate font-mono text-[14px] text-lp-fg md:text-[15px]">
+      <code className="min-w-0 font-mono text-[14px] break-all text-lp-fg md:text-[15px]">
         <span className="select-none text-lp-fg-muted">$ </span>
         {SKILL_COMMAND}
       </code>
@@ -250,7 +250,7 @@ function CommandCard({
     <div className="rounded-xl bg-lp-canvas p-5 shadow-[0_0_0_1px_oklch(100%_0_0_/_8%)]">
       <p className="text-[11px] font-medium tracking-wide text-lp-fg-muted uppercase">{label}</p>
       <div className="mt-3 flex items-center justify-between gap-3 rounded-lg bg-lp-panel px-4 py-3">
-        <code className="truncate font-mono text-[13px] text-lp-fg">{command}</code>
+        <code className="min-w-0 font-mono text-[13px] break-all text-lp-fg">{command}</code>
         <CopyButton text={command} />
       </div>
       <p className="mt-3 text-[13px] leading-relaxed text-lp-fg-secondary">{description}</p>
@@ -329,10 +329,7 @@ export function FinalCta() {
         Free, open source, no sign-up — reviewing in under a minute.
       </p>
       <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-        <div className="flex items-center gap-3 rounded-full bg-lp-panel py-2 pr-2 pl-5 shadow-[0_0_0_1px_oklch(100%_0_0_/_10%)]">
-          <code className="font-mono text-[13px] text-lp-fg">{SKILL_COMMAND}</code>
-          <CopyButton text={SKILL_COMMAND} />
-        </div>
+        <SkillInstallCommand />
         <a className="lp-pill lp-pill-secondary" href={GITHUB_URL} rel="noreferrer" target="_blank">
           Star on GitHub
           <ArrowRightIcon />
