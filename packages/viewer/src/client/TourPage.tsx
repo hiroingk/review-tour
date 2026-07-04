@@ -19,6 +19,7 @@ import {
 import { fileDomId } from './dom';
 import { readReviewComments, writeReviewComments, type ReviewComment } from './reviewComments';
 import { ReviewWorkspace } from './ReviewWorkspace';
+import { SymbolNavigationProvider } from './SymbolNavigation';
 import {
   createEmptyReviewProgress,
   readReviewProgress,
@@ -614,47 +615,49 @@ function ReadyTourPage({
       tour={tour}
     />
   ) : (
-    <ReviewWorkspace
-      chapter={selectedChapter}
-      chapterCompleted={reviewProgress.chapterIds.has(selectedChapter.id)}
-      checkedReviewQuestionIds={reviewProgress.questionIds}
-      comments={reviewComments}
-      diffFoldState={diffFoldState}
-      diffSettings={diffSettings}
-      fileFilter={fileFilter}
-      onBack={() => onNavigate({ mode: 'overview' })}
-      onChapterCompletedToggle={() => onChapterCompletedToggle(selectedChapter.id)}
-      onDiffSettingsChange={onDiffSettingsChange}
-      onFileCollapsedChange={onFileCollapsedChange}
-      onFoldExpand={onFoldExpand}
-      onFoldsExpand={onFoldsExpand}
-      onFileViewedToggle={onFileViewedToggle}
-      onFileFilter={onFileFilter}
-      onChapterSelect={openReview}
-      onCommentAdd={onCommentAdd}
-      onCommentDelete={onCommentDelete}
-      onCommentUpdate={onCommentUpdate}
-      onNext={() => {
-        const chapters = tour.tour.chapters;
-        const index = chapters.findIndex((chapter) => chapter.id === selectedChapter.id);
-        const next = index >= 0 ? chapters[index + 1] : undefined;
-        if (!next) return;
+    <SymbolNavigationProvider chapter={selectedChapter} onChapterSelect={openReview} tour={tour}>
+      <ReviewWorkspace
+        chapter={selectedChapter}
+        chapterCompleted={reviewProgress.chapterIds.has(selectedChapter.id)}
+        checkedReviewQuestionIds={reviewProgress.questionIds}
+        comments={reviewComments}
+        diffFoldState={diffFoldState}
+        diffSettings={diffSettings}
+        fileFilter={fileFilter}
+        onBack={() => onNavigate({ mode: 'overview' })}
+        onChapterCompletedToggle={() => onChapterCompletedToggle(selectedChapter.id)}
+        onDiffSettingsChange={onDiffSettingsChange}
+        onFileCollapsedChange={onFileCollapsedChange}
+        onFoldExpand={onFoldExpand}
+        onFoldsExpand={onFoldsExpand}
+        onFileViewedToggle={onFileViewedToggle}
+        onFileFilter={onFileFilter}
+        onChapterSelect={openReview}
+        onCommentAdd={onCommentAdd}
+        onCommentDelete={onCommentDelete}
+        onCommentUpdate={onCommentUpdate}
+        onNext={() => {
+          const chapters = tour.tour.chapters;
+          const index = chapters.findIndex((chapter) => chapter.id === selectedChapter.id);
+          const next = index >= 0 ? chapters[index + 1] : undefined;
+          if (!next) return;
 
-        selectReviewChapter(next.id);
-      }}
-      onPrevious={() => {
-        const chapters = tour.tour.chapters;
-        const index = chapters.findIndex((chapter) => chapter.id === selectedChapter.id);
-        const previous = index > 0 ? chapters[index - 1] : undefined;
-        if (!previous) return;
+          selectReviewChapter(next.id);
+        }}
+        onPrevious={() => {
+          const chapters = tour.tour.chapters;
+          const index = chapters.findIndex((chapter) => chapter.id === selectedChapter.id);
+          const previous = index > 0 ? chapters[index - 1] : undefined;
+          if (!previous) return;
 
-        selectReviewChapter(previous.id);
-      }}
-      onReviewQuestionCheckedToggle={onReviewQuestionCheckedToggle}
-      onSearchOpen={onSearchOpen}
-      tour={tour}
-      viewedFileIds={reviewProgress.fileIds}
-    />
+          selectReviewChapter(previous.id);
+        }}
+        onReviewQuestionCheckedToggle={onReviewQuestionCheckedToggle}
+        onSearchOpen={onSearchOpen}
+        tour={tour}
+        viewedFileIds={reviewProgress.fileIds}
+      />
+    </SymbolNavigationProvider>
   );
 }
 
