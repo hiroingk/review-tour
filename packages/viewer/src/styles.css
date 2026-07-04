@@ -481,6 +481,45 @@ html[data-theme='light'] img {
   box-shadow: var(--badge-ring);
 }
 
+.symbol-ref {
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.symbol-ref:hover {
+  background: color-mix(in srgb, var(--color-add) 28%, transparent);
+  box-shadow:
+    0 1.5px 0 0 var(--color-add),
+    inset 0 0 0 1px color-mix(in srgb, var(--color-add) 40%, transparent);
+}
+
+html[data-theme='light'] .symbol-ref:hover {
+  background: color-mix(in srgb, var(--color-accent) 16%, transparent);
+  box-shadow: 0 1px 0 0 color-mix(in srgb, var(--color-accent) 65%, transparent);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) .symbol-ref:hover {
+    background: color-mix(in srgb, var(--color-accent) 16%, transparent);
+    box-shadow: 0 1px 0 0 color-mix(in srgb, var(--color-accent) 65%, transparent);
+  }
+}
+
+.symbol-jump-flash {
+  animation: symbol-jump-flash 1.2s var(--ease-polished, ease-out);
+}
+
+@keyframes symbol-jump-flash {
+  0%,
+  55% {
+    box-shadow: inset 0 0 0 999px color-mix(in srgb, var(--color-accent) 26%, transparent);
+  }
+
+  100% {
+    box-shadow: inset 0 0 0 999px transparent;
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

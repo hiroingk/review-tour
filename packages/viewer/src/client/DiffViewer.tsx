@@ -40,6 +40,8 @@ import {
   type ReviewCommentRange,
   type ReviewCommentSide,
 } from './reviewComments';
+import { usePendingSymbolJump, useSymbolNavigation } from './SymbolNavigation';
+import { splitSymbolSegments } from './symbolIndex';
 import { AppIcon, FileViewedToggle } from './ui';
 
 type SyntaxToken = {
@@ -197,6 +199,7 @@ function FileDiff({
   const headerRef = useRef<HTMLElement>(null);
   const syntaxTheme = useResolvedSyntaxTheme(settings.syntaxTheme);
   const syntaxLines = useSyntaxLines(file, syntaxTheme);
+  const pendingSymbolJump = usePendingSymbolJump();
   const [headerStuck, setHeaderStuck] = useState(false);
   const [activeSelection, setActiveSelection] = useState<LineSelection | null>(null);
   const [draftBody, setDraftBody] = useState('');
@@ -342,6 +345,27 @@ function FileDiff({
     setDraftBody('');
     setDraftRange(null);
   }, [file.id, settings.layout]);
+
+  useEffect(() => {
+    if (!pendingSymbolJump || pendingSymbolJump.fileId !== file.id) return;
+
+    if (collapsed) {
+      onCollapsedChange(file.id, false);
+    }
+
+    const foldId = findFoldIdForNewLine(hunkRows, pendingSymbolJump.lineNumber);
+    if (foldId && !expandedFoldIds.has(foldId)) {
+      onFoldExpand(foldId);
+    }
+  }, [
+    collapsed,
+    expandedFoldIds,
+    file.id,
+    hunkRows,
+    onCollapsedChange,
+    onFoldExpand,
+    pendingSymbolJump,
+  ]);
 
   useEffect(() => {
     if (!activeSelection || typeof window === 'undefined') return;
@@ -984,6 +1008,10 @@ function SplitCell({
   return (
     <div
       className={`group/diff-line grid min-h-5 min-w-full ${background}`}
+      data-diff-line-file={
+        side === 'right' && line?.newLine !== undefined ? lineRef?.fileId : undefined
+      }
+      data-diff-line-new={side === 'right' && lineRef ? line?.newLine : undefined}
       onPointerEnter={() => {
         if (lineRef) onLinePointerEnter(lineRef);
       }}
@@ -1190,6 +1218,8 @@ function UnifiedCell({
   return (
     <div
       className={`group/diff-line grid min-h-5 min-w-full ${background}`}
+      data-diff-line-file={line.newLine !== undefined ? lineRef.fileId : undefined}
+      data-diff-line-new={line.newLine}
       onPointerEnter={() => onLinePointerEnter(lineRef)}
       style={rowStyle}
     >
@@ -1595,7 +1625,11 @@ function SyntaxTokenContent({
 }) {
   const style = getSyntaxTokenStyle(token);
   if (!inlineRange || inlineRange.end <= tokenStart || inlineRange.start >= tokenEnd) {
-    return <span style={style}>{token.content}</span>;
+    return (
+      <span style={style}>
+        <SymbolText text={token.content} />
+      </span>
+    );
   }
 
   const highlightStart = Math.max(inlineRange.start, tokenStart) - tokenStart;
@@ -1603,32 +1637,61 @@ function SyntaxTokenContent({
 
   return (
     <span style={style}>
-      {token.content.slice(0, highlightStart)}
+      <SymbolText text={token.content.slice(0, highlightStart)} />
       <span
         style={{
           ...style,
           backgroundColor: 'color-mix(in srgb, var(--color-warning) 24%, transparent)',
         }}
       >
-        {token.content.slice(highlightStart, highlightEnd)}
+        <SymbolText text={token.content.slice(highlightStart, highlightEnd)} />
       </span>
-      {token.content.slice(highlightEnd)}
+      <SymbolText text={token.content.slice(highlightEnd)} />
     </span>
   );
 }
 
+function SymbolText({ text }: { text: string }) {
+  const navigation = useSymbolNavigation();
+  if (!navigation || !text) return text;
+
+  const segments = splitSymbolSegments(text, navigation.hasSymbol);
+  if (!segments.some((segment) => segment.symbol)) return text;
+
+  return segments.map((segment, index) => {
+    if (!segment.symbol) return segment.text;
+
+    return (
+      <span
+        className="symbol-ref"
+        key={index}
+        onClick={(event) => {
+          const selection = window.getSelection();
+          if (selection && !selection.isCollapsed) return;
+
+          event.stopPropagation();
+          navigation.openSymbol(segment.text, { x: event.clientX, y: event.clientY });
+        }}
+        title="Go to definition"
+      >
+        {segment.text}
+      </span>
+    );
+  });
+}
+
 function renderInlineDiffText(content: string, inlineRange: InlineRange | null) {
-  if (!inlineRange) return content;
+  if (!inlineRange) return <SymbolText text={content} />;
 
   return (
     <>
-      {content.slice(0, inlineRange.start)}
+      <SymbolText text={content.slice(0, inlineRange.start)} />
       <span
         style={{ backgroundColor: 'color-mix(in srgb, var(--color-warning) 24%, transparent)' }}
       >
-        {content.slice(inlineRange.start, inlineRange.end)}
+        <SymbolText text={content.slice(inlineRange.start, inlineRange.end)} />
       </span>
-      {content.slice(inlineRange.end)}
+      <SymbolText text={content.slice(inlineRange.end)} />
     </>
   );
 }
@@ -1731,6 +1794,24 @@ function getUnifiedLines(
     lines.push({ line: row.right, pairedLine: row.left });
   }
   return lines;
+}
+
+function findFoldIdForNewLine(
+  hunkRows: ReadonlyArray<{ id: string; rows: ExpandableSplitRow[] }>,
+  lineNumber: number,
+): string | null {
+  for (const hunk of hunkRows) {
+    for (const row of hunk.rows) {
+      if (row.kind !== 'fold') continue;
+
+      const containsLine = row.rows.some(
+        (hidden) => hidden.right?.newLine === lineNumber || hidden.left?.newLine === lineNumber,
+      );
+      if (containsLine) return row.id;
+    }
+  }
+
+  return null;
 }
 
 function buildVisibleLineRefs(
