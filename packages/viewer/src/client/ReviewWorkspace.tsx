@@ -16,7 +16,6 @@ import ChevronLeftIcon from '@hugeicons/core-free-icons/ChevronLeftIcon';
 import ChatGptIcon from '@hugeicons/core-free-icons/ChatGptIcon';
 import ClaudeIcon from '@hugeicons/core-free-icons/ClaudeIcon';
 import Comment01Icon from '@hugeicons/core-free-icons/Comment01Icon';
-import CursorRemoveSelection02Icon from '@hugeicons/core-free-icons/CursorRemoveSelection02Icon';
 import Cancel01Icon from '@hugeicons/core-free-icons/Cancel01Icon';
 import Delete02Icon from '@hugeicons/core-free-icons/Delete02Icon';
 import FileDiffIcon from '@hugeicons/core-free-icons/FileDiffIcon';
@@ -25,6 +24,7 @@ import PencilEdit02Icon from '@hugeicons/core-free-icons/PencilEdit02Icon';
 import SaveIcon from '@hugeicons/core-free-icons/SaveIcon';
 import Search01Icon from '@hugeicons/core-free-icons/Search01Icon';
 import SlidersHorizontalIcon from '@hugeicons/core-free-icons/SlidersHorizontalIcon';
+import TextSelectIcon from '@hugeicons/core-free-icons/TextSelectIcon';
 import type { GitStatusEntry } from '@pierre/trees';
 import { FileTree as PierreFileTree, useFileTree } from '@pierre/trees/react';
 import type { DiffFile, ReviewChapter, ReviewTour } from '@review-tour/schema';
@@ -593,7 +593,7 @@ function CopyReviewPromptButton({
           title={label}
           type="button"
         >
-          <AppIcon icon={CursorRemoveSelection02Icon} size={15} />
+          <AppIcon icon={TextSelectIcon} size={15} />
         </button>
         <PopoverTrigger
           aria-label="Open prompt actions"
@@ -623,7 +623,7 @@ function CopyReviewPromptButton({
       >
         <div className="grid gap-0.5 p-2">
           <ReviewPromptMenuItem
-            icon={CursorRemoveSelection02Icon}
+            icon={TextSelectIcon}
             label="Copy as prompt"
             onClick={() => {
               void copyPrompt().then(() => setOpen(false));
