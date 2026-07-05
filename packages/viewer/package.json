@@ -1,6 +1,7 @@
 {
   "name": "@review-tour/viewer",
   "version": "0.1.0",
+  "private": true,
   "description": "Localhost viewer for guided Review Tour artifacts.",
   "license": "Apache-2.0",
   "repository": {
@@ -19,9 +20,6 @@
       "types": "./dist/lib/index.d.ts",
       "import": "./dist/lib/index.js"
     }
-  },
-  "publishConfig": {
-    "access": "public"
   },
   "scripts": {
     "build": "vp build --config ./vite.config.ts && tsc -p tsconfig.node.json && node ./scripts/sanitize-dist.js",
@@ -46,6 +44,7 @@
     "clsx": "^2.1.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "review-tour": "workspace:*",
     "shiki": "4.2.0",
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.3.1",

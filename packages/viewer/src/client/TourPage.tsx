@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { ReviewChapter, ReviewTour } from '@review-tour/schema';
+import type { ReviewChapter, ReviewTour } from 'review-tour/schema';
 import { Card, CardPanel } from '#/components/ui/card';
 import { Skeleton } from '#/components/ui/skeleton';
 import { fetchTour } from './api';

@@ -3,7 +3,7 @@ import CircleCheckIcon from '@hugeicons/core-free-icons/CircleCheckIcon';
 import CircleIcon from '@hugeicons/core-free-icons/CircleIcon';
 import FileDiffIcon from '@hugeicons/core-free-icons/FileDiffIcon';
 import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react';
-import type { ReviewChapter, ReviewTour, ReviewWarning } from '@review-tour/schema';
+import type { ReviewChapter, ReviewTour, ReviewWarning } from 'review-tour/schema';
 import { Badge, type BadgeProps } from '#/components/ui/badge';
 import {
   Command,

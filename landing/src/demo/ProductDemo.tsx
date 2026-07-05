@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { ReviewChapter } from '@review-tour/schema';
+import type { ReviewChapter } from 'review-tour/schema';
 import {
   addStringSetValues,
   createEmptyDiffFoldState,

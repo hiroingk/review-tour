@@ -27,7 +27,7 @@ import SlidersHorizontalIcon from '@hugeicons/core-free-icons/SlidersHorizontalI
 import TextSelectIcon from '@hugeicons/core-free-icons/TextSelectIcon';
 import type { GitStatusEntry } from '@pierre/trees';
 import { FileTree as PierreFileTree, useFileTree } from '@pierre/trees/react';
-import type { DiffFile, ReviewChapter, ReviewTour } from '@review-tour/schema';
+import type { DiffFile, ReviewChapter, ReviewTour } from 'review-tour/schema';
 import { Button } from '#/components/ui/button';
 import { Checkbox } from '#/components/ui/checkbox';
 import { Input } from '#/components/ui/input';

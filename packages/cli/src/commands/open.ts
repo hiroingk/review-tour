@@ -5,7 +5,7 @@ import {
   DEFAULT_VIEWER_PORT,
   VIEWER_HEALTH_PATH,
   VIEWER_UI_VERSION,
-} from '@review-tour/viewer';
+} from 'review-tour/viewer';
 import { getNumberOption, hasFlag, type ParsedArgs } from '../cliArgs.js';
 import { createRepoHash } from '../artifact/store.js';
 import { detectRepo } from '../git/detectRepo.js';

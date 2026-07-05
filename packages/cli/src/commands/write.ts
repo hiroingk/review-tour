@@ -7,7 +7,7 @@ import {
   type ReviewTour,
   type ReviewTourDraft,
   type ReviewWarning,
-} from '@review-tour/schema';
+} from 'review-tour/schema';
 import { getNumberOption, getStringOption, hasFlag, type ParsedArgs } from '../cliArgs.js';
 import { readJsonInput } from '../artifact/readJson.js';
 import { writeArtifact } from '../artifact/store.js';

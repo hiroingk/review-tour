@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@review-tour/schema": "workspace:*",
-    "@review-tour/viewer": "workspace:*"
+    "@review-tour/viewer": "workspace:*",
+    "review-tour": "workspace:*"
   }
 }

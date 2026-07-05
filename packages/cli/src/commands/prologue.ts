@@ -1,4 +1,4 @@
-import type { ReviewChapter, ReviewPrologue, ReviewTourDraft } from '@review-tour/schema';
+import type { ReviewChapter, ReviewPrologue, ReviewTourDraft } from 'review-tour/schema';
 
 export function createFallbackPrologue({
   chapters,

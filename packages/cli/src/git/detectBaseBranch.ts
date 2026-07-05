@@ -1,4 +1,4 @@
-import type { ReviewWarning } from '@review-tour/schema';
+import type { ReviewWarning } from 'review-tour/schema';
 import { gitSucceeds, runGit } from './runGit.js';
 
 export type BaseBranchResult = {

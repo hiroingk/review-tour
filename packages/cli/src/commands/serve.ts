@@ -1,4 +1,4 @@
-import { createViewerServer, DEFAULT_VIEWER_HOST, DEFAULT_VIEWER_PORT } from '@review-tour/viewer';
+import { createViewerServer, DEFAULT_VIEWER_HOST, DEFAULT_VIEWER_PORT } from 'review-tour/viewer';
 import { getNumberOption, type ParsedArgs } from '../cliArgs.js';
 
 export async function serveCommand(args: ParsedArgs) {

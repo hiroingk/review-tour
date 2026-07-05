@@ -8,7 +8,7 @@ export default defineConfig({
   root: viewerRoot,
   resolve: {
     alias: {
-      '@review-tour/schema': schemaSource,
+      'review-tour/schema': schemaSource,
     },
     tsconfigPaths: true,
   },

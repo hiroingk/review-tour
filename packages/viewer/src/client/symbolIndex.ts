@@ -1,4 +1,4 @@
-import type { DiffFile } from '@review-tour/schema';
+import type { DiffFile } from 'review-tour/schema';
 
 export type SymbolDefinition = {
   content: string;

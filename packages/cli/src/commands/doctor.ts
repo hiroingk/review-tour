@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { getDefaultReviewTourCacheDir } from '@review-tour/viewer';
+import { getDefaultReviewTourCacheDir } from 'review-tour/viewer';
 import { hasFlag, type ParsedArgs } from '../cliArgs.js';
 import { getCliVersion, getRequiredNodeRange } from '../version.js';
 import { getSkillDataDir } from './skills.js';

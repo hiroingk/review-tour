@@ -4,7 +4,7 @@ import {
   type ReviewChapter,
   type ReviewTour,
   type ReviewTourDraft,
-} from '@review-tour/schema';
+} from 'review-tour/schema';
 import { getNumberOption, hasFlag, type ParsedArgs } from '../cliArgs.js';
 import { writeArtifact } from '../artifact/store.js';
 import { collectDraft } from './collect.js';

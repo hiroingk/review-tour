@@ -1,6 +1,6 @@
 import { writeFile } from 'node:fs/promises';
-import type { ReviewTour, ReviewTourDraft, ReviewWarning } from '@review-tour/schema';
-import { assertReviewTourDraft } from '@review-tour/schema';
+import type { ReviewTour, ReviewTourDraft, ReviewWarning } from 'review-tour/schema';
+import { assertReviewTourDraft } from 'review-tour/schema';
 import { getStringOption, hasFlag, type ParsedArgs } from '../cliArgs.js';
 import { parseUnifiedDiff } from '../diff/parseUnifiedDiff.js';
 import { detectBaseBranch } from '../git/detectBaseBranch.js';

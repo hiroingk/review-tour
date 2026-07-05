@@ -1,4 +1,4 @@
-import type { DiffFile, DiffLine, ReviewChapter, ReviewTour } from '@review-tour/schema';
+import type { DiffFile, DiffLine, ReviewChapter, ReviewTour } from 'review-tour/schema';
 
 export type ChapterStats = {
   additions: number;
