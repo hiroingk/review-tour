@@ -45,7 +45,7 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "review-tour": "workspace:*",
-    "shiki": "4.2.0",
+    "shiki": "4.3.1",
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.3.1",
     "vite": "catalog:"
