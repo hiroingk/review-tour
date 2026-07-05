@@ -33,7 +33,7 @@
     "@base-ui/react": "^1.6.0",
     "@hugeicons/core-free-icons": "^4.2.1",
     "@hugeicons/react": "^1.1.7",
-    "@pierre/trees": "1.0.0-beta.4",
+    "@pierre/trees": "1.0.0-beta.5",
     "@review-tour/schema": "workspace:*",
     "@tailwindcss/vite": "^4.3.1",
     "@tanstack/react-router": "^1.170.16",
