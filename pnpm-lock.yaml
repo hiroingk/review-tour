@@ -30,7 +30,7 @@ importers:
         version: 1.1.7(react@19.2.7)
       '@pierre/trees':
         specifier: 1.0.0-beta.5
-        version: 1.0.0-beta.5(@shikijs/themes@4.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(shiki@4.2.0)
+        version: 1.0.0-beta.5(@shikijs/themes@4.3.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(shiki@4.3.1)
       '@tanstack/react-router':
         specifier: ^1.170.16
         version: 1.170.16(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -127,7 +127,7 @@ importers:
         version: 1.1.7(react@19.2.7)
       '@pierre/trees':
         specifier: 1.0.0-beta.5
-        version: 1.0.0-beta.5(@shikijs/themes@4.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(shiki@4.2.0)
+        version: 1.0.0-beta.5(@shikijs/themes@4.3.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(shiki@4.3.1)
       '@review-tour/schema':
         specifier: workspace:*
         version: link:../schema
@@ -2678,16 +2678,16 @@ snapshots:
 
   '@oxlint/plugins@1.68.0': {}
 
-  '@pierre/theming@0.0.2(@shikijs/themes@4.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(shiki@4.2.0)':
+  '@pierre/theming@0.0.2(@shikijs/themes@4.3.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(shiki@4.3.1)':
     optionalDependencies:
-      '@shikijs/themes': 4.2.0
+      '@shikijs/themes': 4.3.1
       react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)
-      shiki: 4.2.0
+      shiki: 4.3.1
 
-  '@pierre/trees@1.0.0-beta.5(@shikijs/themes@4.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(shiki@4.2.0)':
+  '@pierre/trees@1.0.0-beta.5(@shikijs/themes@4.3.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(shiki@4.3.1)':
     dependencies:
-      '@pierre/theming': 0.0.2(@shikijs/themes@4.2.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(shiki@4.2.0)
+      '@pierre/theming': 0.0.2(@shikijs/themes@4.3.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(shiki@4.3.1)
       preact: 11.0.0-beta.0
       preact-render-to-string: 6.6.5(preact@11.0.0-beta.0)
       react: 19.2.7
