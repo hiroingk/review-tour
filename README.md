@@ -70,8 +70,8 @@ npx skills update review-tour
 
 Review Tour has three pieces:
 
-- `review-tour`: the npm CLI package used by agents.
-- `@review-tour/viewer`: the local browser UI opened by the CLI.
+- `review-tour`: the npm CLI package used by agents. It also bundles the viewer and schema runtime.
+- `packages/viewer`: the local browser UI opened by the CLI.
 - `skills/review-tour`: the agent-facing skill stub.
 
 The installed skill loads versioned workflow instructions from the installed CLI
@@ -333,17 +333,15 @@ Review Tour follows the CLI + skill layout used by projects such as
 `vercel-labs/agent-browser`:
 
 - `review-tour`: the npm CLI package. It includes `bin/review-tour.js`,
-  the compiled CLI, `skills/`, and `skill-data/`.
-- `@review-tour/schema`: shared artifact schema package.
-- `@review-tour/viewer`: localhost viewer package used by the CLI.
+  the compiled CLI, schema runtime, viewer runtime, `skills/`, and `skill-data/`.
+- `@review-tour/schema`: private workspace package for shared artifact schema and validation.
+- `@review-tour/viewer`: private workspace package for the localhost viewer used by the CLI.
 
 Use pnpm for release packing so `workspace:*` and catalog dependencies are
 converted to concrete package versions:
 
 ```bash
 pnpm pack
-pnpm --filter @review-tour/schema pack
-pnpm --filter @review-tour/viewer pack
 ```
 
 ## Releasing
@@ -359,14 +357,13 @@ git push origin main v0.2.0
 ```
 
 Pushing the tag runs the publish workflow, which verifies the tag matches
-`package.json`, runs the full verification suite, packs publishable tarballs
-with pnpm, and publishes those tarballs to npm through trusted publishing with
-OIDC. Configure each public package (`review-tour`, `@review-tour/schema`, and
-`@review-tour/viewer`) on npmjs.com with GitHub Actions as the trusted
-publisher for `hiroingk/review-tour`, workflow file `publish.yml`, no
-environment name, and the `npm publish` action allowed before cutting a
-release. Pre-release versions such as `0.2.0-beta.1` publish under the matching
-npm dist-tag instead of `latest`.
+`package.json`, runs the full verification suite, packs the publishable root
+tarball with pnpm, and publishes `review-tour` to npm through trusted publishing
+with OIDC. Configure the `review-tour` package on npmjs.com with GitHub Actions
+as the trusted publisher for `hiroingk/review-tour`, workflow file
+`publish.yml`, no environment name, and the `npm publish` action allowed before
+cutting a release. Pre-release versions such as `0.2.0-beta.1` publish under
+the matching npm dist-tag instead of `latest`.
 
 ## Security
 

@@ -64,8 +64,6 @@ jobs:
           set -euo pipefail
           PACK_DIR="$(mktemp -d)"
           echo "dir=$PACK_DIR" >> "$GITHUB_OUTPUT"
-          pnpm --dir packages/schema pack --pack-destination "$PACK_DIR"
-          pnpm --dir packages/viewer pack --pack-destination "$PACK_DIR"
           pnpm pack --pack-destination "$PACK_DIR"
           ls -1 "$PACK_DIR"
 
@@ -75,6 +73,4 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
           PACK_DIR="${{ steps.pack.outputs.dir }}"
           DIST_TAG="${{ steps.dist_tag.outputs.tag }}"
-          npm publish "$PACK_DIR/review-tour-schema-$VERSION.tgz" --access public --provenance --tag "$DIST_TAG"
-          npm publish "$PACK_DIR/review-tour-viewer-$VERSION.tgz" --access public --provenance --tag "$DIST_TAG"
           npm publish "$PACK_DIR/review-tour-$VERSION.tgz" --access public --provenance --tag "$DIST_TAG"

@@ -1,6 +1,6 @@
 import { readdir, rm, stat } from 'node:fs/promises';
 import path from 'node:path';
-import { getDefaultReviewTourCacheDir } from '@review-tour/viewer';
+import { getDefaultReviewTourCacheDir } from 'review-tour/viewer';
 import { type ParsedArgs } from '../cliArgs.js';
 
 export type Candidate = {

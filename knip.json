@@ -9,7 +9,25 @@
     ".": {
       "entry": ["scripts/*.mjs"],
       "project": ["bin/**", "scripts/**"],
-      "ignoreDependencies": ["@review-tour/schema", "@review-tour/viewer"]
+      "ignoreDependencies": [
+        "@base-ui/react",
+        "@hugeicons/core-free-icons",
+        "@hugeicons/react",
+        "@pierre/trees",
+        "@tailwindcss/vite",
+        "@tanstack/react-router",
+        "@tanstack/react-start",
+        "@tanstack/router-plugin",
+        "@vitejs/plugin-react",
+        "class-variance-authority",
+        "clsx",
+        "react",
+        "react-dom",
+        "shiki",
+        "tailwind-merge",
+        "tailwindcss",
+        "vite"
+      ]
     },
     "landing": {
       "entry": ["src/main.tsx"],
@@ -18,7 +36,8 @@
     },
     "packages/cli": {
       "entry": ["test/*.test.js"],
-      "project": ["src/**", "test/**"]
+      "project": ["src/**", "test/**"],
+      "ignoreDependencies": ["@review-tour/schema", "@review-tour/viewer"]
     },
     "packages/schema": {
       "entry": ["test/*.test.js"],
@@ -28,7 +47,7 @@
       "entry": ["src/router.tsx", "src/routes/**/*.{ts,tsx}", "scripts/*.js", "test/*.test.js"],
       "project": ["src/**", "scripts/**", "test/**"],
       "ignore": ["src/components/ui/**"],
-      "ignoreDependencies": ["@tanstack/router-plugin"]
+      "ignoreDependencies": ["@review-tour/schema", "@tanstack/router-plugin"]
     }
   }
 }

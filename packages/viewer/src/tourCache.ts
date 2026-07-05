@@ -1,7 +1,7 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
-import { assertReviewTour, type ReviewTour } from '@review-tour/schema';
+import { assertReviewTour, type ReviewTour } from 'review-tour/schema';
 
 export const repoHashPattern = /^[a-f0-9]{12}$/;
 export const tourIdPattern = /^[a-zA-Z0-9._-]+$/;

@@ -1,4 +1,4 @@
-import type { DiffFile, DiffHunk, DiffLine, ReviewWarning } from '@review-tour/schema';
+import type { DiffFile, DiffHunk, DiffLine, ReviewWarning } from 'review-tour/schema';
 import { createHunkId, sha256 } from './createHunkIds.js';
 
 type MutableFile = Omit<DiffFile, 'id' | 'hunks'> & {

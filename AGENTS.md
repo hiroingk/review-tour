@@ -10,9 +10,9 @@ Required runtime: Node.js `>=22.12.0`, pnpm `10`.
 
 ## Architecture Boundaries
 
-- `review-tour` is the root npm CLI package. It publishes `bin/review-tour.js`, compiled CLI files under `packages/cli/dist`, `skill-data/`, and `skills/`.
-- `@review-tour/schema` owns the artifact types and validation.
-- `@review-tour/viewer` owns the localhost TanStack Start viewer.
+- `review-tour` is the only public npm package. It publishes `bin/review-tour.js`, compiled CLI files under `packages/cli/dist`, compiled schema files under `packages/schema/dist`, compiled viewer files under `packages/viewer/dist`, `skill-data/`, and `skills/`.
+- `@review-tour/schema` is a private workspace package that owns the artifact types and validation.
+- `@review-tour/viewer` is a private workspace package that owns the localhost TanStack Start viewer.
 - `@review-tour/cli` is an internal workspace package. Do not treat it as the public npm entrypoint.
 - Runtime review artifacts must be written to the OS cache, never into the reviewed repository.
 - The viewer must read artifacts only by `repoHash` and `tourId`; do not add URL-driven arbitrary file path reads.
@@ -77,7 +77,7 @@ All packages share one version (fixed versioning):
 - Draft release notes with `pnpm run changelog:draft`.
 - Pushing a `v*` tag triggers `.github/workflows/publish.yml`, which verifies the tag matches `package.json`, runs `pnpm run verify`, packs publishable tarballs with `pnpm pack`, and publishes to npm through trusted publishing with OIDC.
 - Pre-release versions (`-alpha.N`, `-beta.N`, `-rc.N`) publish under the matching npm dist-tag; stable versions publish as `latest`.
-- Publishing requires npm trusted publisher configuration for `review-tour`, `@review-tour/schema`, and `@review-tour/viewer` pointing at `hiroingk/review-tour`, workflow file `publish.yml`, no environment name, and the `npm publish` action; do not use an `NPM_TOKEN` repository secret.
+- Publishing requires npm trusted publisher configuration for `review-tour` pointing at `hiroingk/review-tour`, workflow file `publish.yml`, no environment name, and the `npm publish` action; do not use an `NPM_TOKEN` repository secret.
 
 ## Landing Page
 
@@ -87,7 +87,7 @@ All packages share one version (fixed versioning):
   viewer components into `landing/`.
 - Keep `ReviewWorkspace` free of router and API dependencies (props-driven); the landing page
   relies on that to embed it.
-- The demo artifact in `landing/src/demo/demoTour.ts` must follow `@review-tour/schema` types.
+- The demo artifact in `landing/src/demo/demoTour.ts` must follow the internal schema types.
 - `.github/workflows/landing.yml` deploys `landing/dist` to GitHub Pages on pushes to `main`.
 - See `landing/README.md` for commands.
 
@@ -139,14 +139,14 @@ For release layout changes, also verify the publishable tarballs:
 
 ```bash
 pnpm pack
-pnpm --dir packages/schema pack
-pnpm --dir packages/viewer pack
 ```
 
 The root tarball must include:
 
 - `bin/review-tour.js`
 - `packages/cli/dist`
+- `packages/schema/dist`
+- `packages/viewer/dist`
 - `skills/review-tour/SKILL.md`
 - `skill-data/core/SKILL.md`
 

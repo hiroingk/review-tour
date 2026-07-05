@@ -12,11 +12,11 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@review-tour/schema": "workspace:*",
     "@tailwindcss/vite": "^4.3.1",
     "@vitejs/plugin-react": "^6.0.3",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "review-tour": "workspace:*",
     "tailwindcss": "^4.3.1",
     "vite": "catalog:"
   },

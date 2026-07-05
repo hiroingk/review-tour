@@ -16,7 +16,7 @@ The landing page owns only the window chrome, the terminal animation, and the au
 cycles chapters until the visitor interacts.
 
 The demo data in `src/demo/demoTour.ts` is a hand-written `ReviewTour` artifact that follows
-`@review-tour/schema` types, so schema changes surface here as type errors.
+the internal schema types, so schema changes surface here as type errors.
 
 Note: the app intentionally renders without React `StrictMode` — the viewer's file tree
 (`@pierre/trees`) wires an imperative model in effects and does not survive StrictMode's

@@ -14,7 +14,7 @@ export default defineConfig({
   base: process.env.LANDING_BASE ?? '/',
   resolve: {
     alias: {
-      '@review-tour/schema': schemaSource,
+      'review-tour/schema': schemaSource,
       // The viewer sources import their own modules through the `#/*` alias.
       '#': viewerSource,
     },

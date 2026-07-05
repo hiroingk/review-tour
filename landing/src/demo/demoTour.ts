@@ -1,4 +1,4 @@
-import type { DiffFile, ReviewTour } from '@review-tour/schema';
+import type { DiffFile, ReviewTour } from 'review-tour/schema';
 
 const verifySignatureFile: DiffFile = {
   id: 'file-verify-signature',

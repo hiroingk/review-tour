@@ -3,7 +3,7 @@ import ArrowRight01Icon from '@hugeicons/core-free-icons/ArrowRight01Icon';
 import ArrowRight02Icon from '@hugeicons/core-free-icons/ArrowRight02Icon';
 import GitBranchIcon from '@hugeicons/core-free-icons/GitBranchIcon';
 import Search01Icon from '@hugeicons/core-free-icons/Search01Icon';
-import type { ReviewChapter, ReviewPrologue, ReviewTour } from '@review-tour/schema';
+import type { ReviewChapter, ReviewPrologue, ReviewTour } from 'review-tour/schema';
 import { Button } from '#/components/ui/button';
 import { Card, CardPanel } from '#/components/ui/card';
 import { getChapterStats } from '../reviewModel';

@@ -24,6 +24,8 @@
   "files": [
     "bin",
     "packages/cli/dist",
+    "packages/schema/dist",
+    "packages/viewer/dist",
     "skill-data",
     "skills",
     "skills-manifest.json",
@@ -31,6 +33,16 @@
     "README.md"
   ],
   "type": "module",
+  "exports": {
+    "./schema": {
+      "types": "./packages/schema/dist/reviewTourSchema.d.ts",
+      "import": "./packages/schema/dist/reviewTourSchema.js"
+    },
+    "./viewer": {
+      "types": "./packages/viewer/dist/lib/index.d.ts",
+      "import": "./packages/viewer/dist/lib/index.js"
+    }
+  },
   "scripts": {
     "dev": "vp dev",
     "build": "vp build && vp run -r build:node && node packages/viewer/scripts/sanitize-dist.js",
@@ -52,8 +64,23 @@
     "verify": "pnpm run check && pnpm run skills:lint && pnpm run skills:manifest:check && pnpm run knip && pnpm run test && pnpm run build"
   },
   "dependencies": {
-    "@review-tour/schema": "workspace:*",
-    "@review-tour/viewer": "workspace:*"
+    "@base-ui/react": "^1.6.0",
+    "@hugeicons/core-free-icons": "^4.2.1",
+    "@hugeicons/react": "^1.1.7",
+    "@pierre/trees": "1.0.0-beta.4",
+    "@tailwindcss/vite": "^4.3.1",
+    "@tanstack/react-router": "^1.170.16",
+    "@tanstack/react-start": "^1.168.26",
+    "@tanstack/router-plugin": "^1.168.18",
+    "@vitejs/plugin-react": "^6.0.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "shiki": "4.2.0",
+    "tailwind-merge": "^3.6.0",
+    "tailwindcss": "^4.3.1",
+    "vite": "catalog:"
   },
   "devDependencies": {
     "@types/node": "^26.0.0",

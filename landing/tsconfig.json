@@ -19,7 +19,7 @@
     "types": ["node", "vite/client"],
     "paths": {
       "#/*": ["../packages/viewer/src/*"],
-      "@review-tour/schema": ["../packages/schema/src/reviewTourSchema.ts"]
+      "review-tour/schema": ["../packages/schema/src/reviewTourSchema.ts"]
     }
   }
 }

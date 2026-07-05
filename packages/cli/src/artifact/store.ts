@@ -1,9 +1,9 @@
 import { createHash } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import type { ReviewTour } from '@review-tour/schema';
-import { assertReviewTour } from '@review-tour/schema';
-import { getDefaultReviewTourCacheDir } from '@review-tour/viewer';
+import type { ReviewTour } from 'review-tour/schema';
+import { assertReviewTour } from 'review-tour/schema';
+import { getDefaultReviewTourCacheDir } from 'review-tour/viewer';
 
 export type ArtifactWriteResult = {
   repoHash: string;

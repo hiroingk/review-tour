@@ -1,4 +1,4 @@
-import type { ReviewTour } from '@review-tour/schema';
+import type { ReviewTour } from 'review-tour/schema';
 import type { ListedTour } from '../tourCache';
 
 export function fetchTours() {

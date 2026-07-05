@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import LinkSquare02Icon from '@hugeicons/core-free-icons/LinkSquare02Icon';
-import type { ReviewChapter, ReviewTour } from '@review-tour/schema';
+import type { ReviewChapter, ReviewTour } from 'review-tour/schema';
 import { buildSymbolIndex, type SymbolDefinition } from './symbolIndex';
 import { fileDomId } from './dom';
 import { AppIcon } from './ui';

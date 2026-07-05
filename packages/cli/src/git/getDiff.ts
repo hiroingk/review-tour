@@ -1,4 +1,4 @@
-import type { ReviewTour } from '@review-tour/schema';
+import type { ReviewTour } from 'review-tour/schema';
 import { runGit } from './runGit.js';
 
 export type DiffMode = ReviewTour['diff']['mode'];

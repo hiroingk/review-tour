@@ -17,7 +17,7 @@ import SaveIcon from '@hugeicons/core-free-icons/SaveIcon';
 import Sent02Icon from '@hugeicons/core-free-icons/Sent02Icon';
 import SquareArrowVerticalIcon from '@hugeicons/core-free-icons/SquareArrowVerticalIcon';
 import type { LanguageInput } from 'shiki/types';
-import type { DiffFile, DiffLine } from '@review-tour/schema';
+import type { DiffFile, DiffLine } from 'review-tour/schema';
 import { Button } from '#/components/ui/button';
 import {
   buildSplitRows,

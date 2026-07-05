@@ -1,5 +1,5 @@
 import path from 'node:path';
-import type { ReviewWarning } from '@review-tour/schema';
+import type { ReviewWarning } from 'review-tour/schema';
 import { runGit } from './runGit.js';
 
 export type RepositoryInfo = {
