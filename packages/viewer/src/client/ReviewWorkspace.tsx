@@ -16,7 +16,6 @@ import ChevronLeftIcon from '@hugeicons/core-free-icons/ChevronLeftIcon';
 import ChatGptIcon from '@hugeicons/core-free-icons/ChatGptIcon';
 import ClaudeIcon from '@hugeicons/core-free-icons/ClaudeIcon';
 import Comment01Icon from '@hugeicons/core-free-icons/Comment01Icon';
-import CursorRemoveSelection02Icon from '@hugeicons/core-free-icons/CursorRemoveSelection02Icon';
 import Cancel01Icon from '@hugeicons/core-free-icons/Cancel01Icon';
 import Delete02Icon from '@hugeicons/core-free-icons/Delete02Icon';
 import FileDiffIcon from '@hugeicons/core-free-icons/FileDiffIcon';
@@ -25,6 +24,7 @@ import PencilEdit02Icon from '@hugeicons/core-free-icons/PencilEdit02Icon';
 import SaveIcon from '@hugeicons/core-free-icons/SaveIcon';
 import Search01Icon from '@hugeicons/core-free-icons/Search01Icon';
 import SlidersHorizontalIcon from '@hugeicons/core-free-icons/SlidersHorizontalIcon';
+import TextSelectIcon from '@hugeicons/core-free-icons/TextSelectIcon';
 import type { GitStatusEntry } from '@pierre/trees';
 import { FileTree as PierreFileTree, useFileTree } from '@pierre/trees/react';
 import type { DiffFile, ReviewChapter, ReviewTour } from '@review-tour/schema';
@@ -33,6 +33,7 @@ import { Checkbox } from '#/components/ui/checkbox';
 import { Input } from '#/components/ui/input';
 import { Label } from '#/components/ui/label';
 import { Popover, PopoverPopup, PopoverTrigger } from '#/components/ui/popover';
+import { ScrollArea } from '#/components/ui/scroll-area';
 import {
   Select,
   SelectItem,
@@ -354,21 +355,25 @@ export function ReviewWorkspace({
           data-diff-scroll-root={activeTab === 'chapters' ? '' : undefined}
         >
           {activeTab === 'chapters' ? (
-            <DiffViewer
-              collapsedFileIds={diffFoldState.collapsedFileIds}
-              comments={comments}
-              expandedFoldIds={diffFoldState.expandedFoldIds}
-              files={visibleFiles}
-              onCommentAdd={onCommentAdd}
-              onCommentDelete={onCommentDelete}
-              onCommentUpdate={onCommentUpdate}
-              onFileCollapsedChange={onFileCollapsedChange}
-              onFoldExpand={onFoldExpand}
-              onFoldsExpand={onFoldsExpand}
-              onFileViewedToggle={onFileViewedToggle}
-              settings={diffSettings}
-              viewedFileIds={viewedFileIds}
-            />
+            /* Top spacing lives on this inner wrapper instead of the scroll container so the
+               sticky file headers stay flush with the scrollport edge while scrolling. */
+            <div className="pt-7 max-lg:pt-5">
+              <DiffViewer
+                collapsedFileIds={diffFoldState.collapsedFileIds}
+                comments={comments}
+                expandedFoldIds={diffFoldState.expandedFoldIds}
+                files={visibleFiles}
+                onCommentAdd={onCommentAdd}
+                onCommentDelete={onCommentDelete}
+                onCommentUpdate={onCommentUpdate}
+                onFileCollapsedChange={onFileCollapsedChange}
+                onFoldExpand={onFoldExpand}
+                onFoldsExpand={onFoldsExpand}
+                onFileViewedToggle={onFileViewedToggle}
+                settings={diffSettings}
+                viewedFileIds={viewedFileIds}
+              />
+            </div>
           ) : (
             <ReviewCommentsView
               comments={comments}
@@ -588,7 +593,7 @@ function CopyReviewPromptButton({
           title={label}
           type="button"
         >
-          <AppIcon icon={CursorRemoveSelection02Icon} size={15} />
+          <AppIcon icon={TextSelectIcon} size={15} />
         </button>
         <PopoverTrigger
           aria-label="Open prompt actions"
@@ -618,7 +623,7 @@ function CopyReviewPromptButton({
       >
         <div className="grid gap-0.5 p-2">
           <ReviewPromptMenuItem
-            icon={CursorRemoveSelection02Icon}
+            icon={TextSelectIcon}
             label="Copy as prompt"
             onClick={() => {
               void copyPrompt().then(() => setOpen(false));
@@ -744,29 +749,31 @@ function ReviewToolbar({
 
   return (
     <div className="border-b border-line px-4 py-3">
-      <div className="grid min-h-9 grid-cols-[auto_auto_minmax(0,1fr)_auto] items-center gap-3">
-        <ChapterReviewedToggle
-          completed={chapterCompleted}
-          onToggle={onChapterCompletedToggle}
-          title={
-            chapterCompleted
-              ? 'Mark current chapter as not reviewed'
-              : 'Mark current chapter as reviewed'
-          }
-          variant="icon"
-        />
+      <div className="grid min-h-9 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
         <IconButton
           disabled={!hasPreviousChapter}
           icon={ArrowLeft01Icon}
           label="Previous chapter"
           onClick={onPrevious}
         />
-        <ChapterPicker
-          activeChapter={chapter}
-          chapters={chapters}
-          onChapterSelect={onChapterSelect}
-          tour={tour}
-        />
+        <div className="mx-auto flex min-w-0 items-center gap-1.5">
+          <ChapterReviewedToggle
+            completed={chapterCompleted}
+            onToggle={onChapterCompletedToggle}
+            title={
+              chapterCompleted
+                ? 'Mark current chapter as not reviewed'
+                : 'Mark current chapter as reviewed'
+            }
+            variant="icon"
+          />
+          <ChapterPicker
+            activeChapter={chapter}
+            chapters={chapters}
+            onChapterSelect={onChapterSelect}
+            tour={tour}
+          />
+        </div>
         <IconButton
           disabled={!hasNextChapter}
           icon={ArrowRight01Icon}
@@ -797,7 +804,7 @@ function ChapterPicker({
         aria-label="Select chapter"
         render={
           <button
-            className={`focus-ring pressable hit-area-40 mx-auto inline-flex min-h-8 max-w-full items-center gap-1.5 rounded-[8px] px-2 text-sm font-medium text-fg transition-[background-color,color,scale] ${
+            className={`focus-ring pressable hit-area-40 inline-flex min-h-8 min-w-0 max-w-full items-center gap-1.5 rounded-[8px] px-2 text-sm font-medium text-fg transition-[background-color,color,scale] ${
               open ? 'bg-hover' : 'hover:bg-hover'
             }`}
             title="Select chapter"
@@ -815,23 +822,26 @@ function ChapterPicker({
       </PopoverTrigger>
       <PopoverPopup
         align="center"
-        className="w-[min(460px,calc(100vw-32px))] border-[0.5px] border-line bg-panel text-fg-secondary before:shadow-none [--viewport-inline-padding:0px] dark:before:shadow-none"
+        className="w-[min(460px,calc(100vw-32px))] rounded-2xl border-[0.5px] border-line bg-panel text-fg-secondary before:rounded-[calc(var(--radius-2xl)-1px)] before:shadow-none dark:before:shadow-none"
         sideOffset={8}
+        viewportClassName="py-0 [--viewport-inline-padding:0px]"
       >
-        <div className="grid max-h-[min(420px,calc(100vh-112px))] gap-1 overflow-auto p-1">
-          {chapters.map((chapter) => (
-            <ChapterPickerItem
-              active={chapter.id === activeChapter.id}
-              chapter={chapter}
-              key={chapter.id}
-              onSelect={() => {
-                setOpen(false);
-                onChapterSelect(chapter);
-              }}
-              stats={getChapterStats(tour, chapter)}
-            />
-          ))}
-        </div>
+        <ScrollArea className="max-h-[min(420px,calc(100vh-112px))]" scrollFade scrollbarGutter>
+          <div className="grid gap-1 p-1.5">
+            {chapters.map((chapter) => (
+              <ChapterPickerItem
+                active={chapter.id === activeChapter.id}
+                chapter={chapter}
+                key={chapter.id}
+                onSelect={() => {
+                  setOpen(false);
+                  onChapterSelect(chapter);
+                }}
+                stats={getChapterStats(tour, chapter)}
+              />
+            ))}
+          </div>
+        </ScrollArea>
       </PopoverPopup>
     </Popover>
   );
@@ -851,7 +861,7 @@ function ChapterPickerItem({
   return (
     <button
       aria-current={active ? 'true' : undefined}
-      className={`focus-ring grid min-h-[72px] w-full grid-cols-[42px_minmax(0,1fr)] items-center gap-3 rounded-[8px] px-3 py-2.5 text-left transition-[background-color,color,scale] duration-150 [transition-timing-function:var(--ease-polished)] active:scale-[0.96] ${
+      className={`focus-ring grid min-h-16 w-full grid-cols-[42px_minmax(0,1fr)] items-center gap-3 rounded-[8px] px-2.5 py-2 text-left transition-[background-color,color,scale] duration-150 [transition-timing-function:var(--ease-polished)] active:scale-[0.96] ${
         active ? 'bg-raised-strong text-fg' : 'text-fg-secondary hover:bg-hover hover:text-fg'
       }`}
       onClick={onSelect}
@@ -1157,7 +1167,7 @@ function ReviewCommentsPanel({
           ))}
         </ul>
       ) : (
-        <p className="mt-3 text-sm leading-[1.45] text-fg-muted">
+        <p className="text-sm leading-[1.45] text-fg-muted">
           Hover a code line and drag the + button to add a comment.
         </p>
       )}

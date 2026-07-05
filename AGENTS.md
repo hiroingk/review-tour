@@ -79,6 +79,18 @@ All packages share one version (fixed versioning):
 - Pre-release versions (`-alpha.N`, `-beta.N`, `-rc.N`) publish under the matching npm dist-tag; stable versions publish as `latest`.
 - Publishing requires the `NPM_TOKEN` repository secret.
 
+## Landing Page
+
+- `landing/` is a private workspace package that builds the static marketing site.
+- It embeds the real `ReviewWorkspace` component and design tokens directly from
+  `packages/viewer/src`, so the hero demo always reflects the current viewer UI. Do not copy
+  viewer components into `landing/`.
+- Keep `ReviewWorkspace` free of router and API dependencies (props-driven); the landing page
+  relies on that to embed it.
+- The demo artifact in `landing/src/demo/demoTour.ts` must follow `@review-tour/schema` types.
+- `.github/workflows/landing.yml` deploys `landing/dist` to GitHub Pages on pushes to `main`.
+- See `landing/README.md` for commands.
+
 ## Viewer Changes
 
 When changing viewer behavior:
