@@ -75,9 +75,9 @@ All packages share one version (fixed versioning):
 
 - Bump versions with `pnpm run set-version <version>`. It updates the root and every workspace package and prints the commit and tag commands.
 - Draft release notes with `pnpm run changelog:draft`.
-- Pushing a `v*` tag triggers `.github/workflows/publish.yml`, which verifies the tag matches `package.json`, runs `pnpm run verify`, and publishes to npm.
+- Pushing a `v*` tag triggers `.github/workflows/publish.yml`, which verifies the tag matches `package.json`, runs `pnpm run verify`, packs publishable tarballs with `pnpm pack`, and publishes to npm through trusted publishing with OIDC.
 - Pre-release versions (`-alpha.N`, `-beta.N`, `-rc.N`) publish under the matching npm dist-tag; stable versions publish as `latest`.
-- Publishing requires the `NPM_TOKEN` repository secret.
+- Publishing requires npm trusted publisher configuration for `review-tour`, `@review-tour/schema`, and `@review-tour/viewer` pointing at `hiroingk/review-tour`, workflow file `publish.yml`, no environment name, and the `npm publish` action; do not use an `NPM_TOKEN` repository secret.
 
 ## Landing Page
 
