@@ -14,18 +14,12 @@
         "@hugeicons/core-free-icons",
         "@hugeicons/react",
         "@pierre/trees",
-        "@tailwindcss/vite",
         "@tanstack/react-router",
-        "@tanstack/react-start",
-        "@tanstack/router-plugin",
-        "@vitejs/plugin-react",
         "class-variance-authority",
         "clsx",
         "react",
         "react-dom",
-        "shiki",
         "tailwind-merge",
-        "tailwindcss",
         "vite"
       ]
     },
