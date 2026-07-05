@@ -40,6 +40,7 @@ jobs:
 
   deploy:
     needs: build
+    if: ${{ !github.event.repository.private || github.event.repository.has_pages }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages

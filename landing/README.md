@@ -37,4 +37,5 @@ Set `LANDING_BASE` when the site is served from a subpath (GitHub Pages uses
 `.github/workflows/landing.yml` builds and deploys `landing/dist` to GitHub Pages on every
 push to `main` that touches the landing page, the viewer sources, or the schema. Enable
 GitHub Pages with the "GitHub Actions" source in the repository settings before the first
-deploy.
+deploy. Private repositories skip the deploy job until they already have a Pages site, because
+some GitHub plans do not support Pages for private repositories.
