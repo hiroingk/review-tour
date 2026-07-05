@@ -175,41 +175,52 @@ export function ProductDemo() {
   );
 }
 
-type TerminalLine = {
+type TerminalStep = {
   id: string;
+  kind: 'tool' | 'sub' | 'success';
   text: string;
-  tone: 'command' | 'output' | 'accent';
 };
 
-const terminalLines: TerminalLine[] = [
-  { id: 'cmd', text: '$ review-tour generate', tone: 'command' },
-  {
-    id: 'collect',
-    text: 'Collecting diff against main… 5 files changed (+75 −2)',
-    tone: 'output',
-  },
-  { id: 'chapters', text: 'Writing chapters…', tone: 'output' },
-  { id: 'ch1', text: '  1. Verify webhook signatures        high', tone: 'output' },
-  { id: 'ch2', text: '  2. Idempotent event processing      medium', tone: 'output' },
-  { id: 'ch3', text: '  3. Tests and configuration          low', tone: 'output' },
-  { id: 'ready', text: 'Tour ready → http://localhost:4378', tone: 'accent' },
+const COMMAND_TEXT = '/review-tour';
+
+const terminalSteps: TerminalStep[] = [
+  { id: 'collect', kind: 'tool', text: 'Reviewing the diff against main — 5 files (+75 −2)' },
+  { id: 'chapters', kind: 'tool', text: 'Writing chapters' },
+  { id: 'ch1', kind: 'sub', text: '1. Verify webhook signatures        high' },
+  { id: 'ch2', kind: 'sub', text: '2. Idempotent event processing      medium' },
+  { id: 'ch3', kind: 'sub', text: '3. Tests and configuration          low' },
+  { id: 'open', kind: 'tool', text: 'Opening the viewer' },
+  { id: 'ready', kind: 'success', text: 'Tour ready → http://localhost:4378' },
 ];
 
 function DemoTerminal({ play, reducedMotion }: { play: boolean; reducedMotion: boolean }) {
-  const [visibleCount, setVisibleCount] = useState(0);
+  const [typedChars, setTypedChars] = useState(0);
+  const [revealedCount, setRevealedCount] = useState(0);
+  const commandTyped = typedChars >= COMMAND_TEXT.length;
+  const finished = revealedCount >= terminalSteps.length;
 
   useEffect(() => {
     if (!play) return;
     if (reducedMotion) {
-      setVisibleCount(terminalLines.length);
+      setTypedChars(COMMAND_TEXT.length);
+      setRevealedCount(terminalSteps.length);
       return;
     }
-    if (visibleCount >= terminalLines.length) return;
 
-    const delay = visibleCount === 0 ? 400 : visibleCount === 1 ? 900 : 550;
-    const id = window.setTimeout(() => setVisibleCount((count) => count + 1), delay);
+    if (!commandTyped) {
+      // A little jitter between keystrokes reads as typed rather than revealed.
+      const delay = typedChars === 0 ? 500 : 32 + Math.round(Math.random() * 30);
+      const id = window.setTimeout(() => setTypedChars((count) => count + 1), delay);
+      return () => window.clearTimeout(id);
+    }
+
+    if (finished) return;
+
+    const nextStep = terminalSteps[revealedCount];
+    const delay = revealedCount === 0 ? 420 : nextStep.kind === 'sub' ? 130 : 620;
+    const id = window.setTimeout(() => setRevealedCount((count) => count + 1), delay);
     return () => window.clearTimeout(id);
-  }, [play, reducedMotion, visibleCount]);
+  }, [play, reducedMotion, typedChars, commandTyped, finished, revealedCount]);
 
   return (
     <div className="pointer-events-none absolute -right-3 -bottom-8 hidden w-[380px] overflow-hidden rounded-lg bg-[oklch(12%_0.004_95)] shadow-[0_0_0_1px_oklch(100%_0_0_/_12%),0_16px_48px_-12px_rgb(0_0_0_/_80%)] lg:block">
@@ -219,25 +230,34 @@ function DemoTerminal({ play, reducedMotion }: { play: boolean; reducedMotion: b
           <span className="size-2 rounded-full bg-[#febc2e]" />
           <span className="size-2 rounded-full bg-[#28c840]" />
         </div>
-        <p className="text-[10px] text-fg-faint">terminal</p>
+        <p className="text-[10px] text-fg-faint">Claude Code</p>
       </div>
       <div className="min-h-40 px-4 py-3 font-mono text-[11px] leading-[1.8]">
-        {terminalLines.slice(0, visibleCount).map((line) => (
-          <p
-            className={
-              line.tone === 'command'
-                ? 'text-fg'
-                : line.tone === 'accent'
-                  ? 'text-diff-add-fg'
-                  : 'text-fg-muted'
-            }
-            key={line.id}
-          >
-            {line.text}
+        <p className="text-fg">
+          <span className="select-none text-fg-muted">{'> '}</span>
+          {COMMAND_TEXT.slice(0, typedChars)}
+          {!commandTyped ? (
+            <span className="lp-terminal-caret ml-px inline-block h-3.5 w-1.5 translate-y-0.5 bg-fg-muted" />
+          ) : null}
+        </p>
+        {commandTyped
+          ? terminalSteps.slice(0, revealedCount).map((step) => (
+              <p
+                className={`lp-terminal-line ${step.kind === 'success' ? 'lp-terminal-success text-diff-add-fg' : 'text-fg-muted'}`}
+                key={step.id}
+              >
+                {step.kind === 'tool' ? (
+                  <span className="lp-terminal-bullet mr-1.5 inline-block text-fg-faint">●</span>
+                ) : null}
+                {step.text}
+              </p>
+            ))
+          : null}
+        {commandTyped && finished ? (
+          <p className="lp-terminal-line text-fg">
+            <span className="select-none text-fg-muted">{'> '}</span>
+            <span className="lp-terminal-caret inline-block h-3.5 w-1.5 translate-y-0.5 bg-fg-muted" />
           </p>
-        ))}
-        {visibleCount < terminalLines.length ? (
-          <span className="lp-terminal-caret inline-block h-3.5 w-1.5 translate-y-0.5 bg-fg-muted" />
         ) : null}
       </div>
     </div>
