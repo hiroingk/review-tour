@@ -85,7 +85,7 @@ export function Hero({ demo }: { demo: ReactNode }) {
           Free and open source. No sign-up — everything runs on your machine.
         </p>
       </div>
-      <div className="mt-14 md:mt-16" id="demo">
+      <div className="mt-14 scroll-mt-24 md:mt-16" id="demo">
         <div
           className="-mx-5 p-2 shadow-[inset_0_0_0_1px_oklch(100%_0_0_/_8%)] md:mx-0 md:rounded-2xl md:p-10"
           style={{
@@ -200,7 +200,7 @@ export function FeaturePanel({
 
 export function InstallPanel() {
   return (
-    <div className="rounded-2xl bg-lp-panel" id="install">
+    <div className="scroll-mt-24 rounded-2xl bg-lp-panel" id="install">
       <div className="grid items-center gap-10 p-6 md:grid-cols-2 md:gap-14 md:p-14">
         <div>
           <h2 className="lp-heading text-[26px] leading-[1.3] md:text-[30px]">

@@ -19,7 +19,7 @@ export function App() {
       <main>
         <Hero demo={<ResponsiveDemo />} />
         <SurfacesRow />
-        <section className="lp-container flex flex-col gap-4 pt-16" id="features">
+        <section className="lp-container flex flex-col gap-4 scroll-mt-24 pt-16" id="features">
           <FeaturePanel
             heading="Every pull request becomes a guided tour."
             headingMuted="Chapters order the diff by meaning instead of file path, so you review the change the way the author thought it."
