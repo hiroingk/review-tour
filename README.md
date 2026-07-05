@@ -6,10 +6,10 @@ high-level chapters to the exact files and hunks that need attention.
 
 [![skills.sh](https://skills.sh/b/hiroingk/review-tour)](https://skills.sh/hiroingk/review-tour)
 
-Install the skill once, then ask Codex or Claude Code to open the current diff as
-a guided review tour. The agent uses the `review-tour` CLI and local viewer under
-the hood, so day-to-day usage starts from your coding agent rather than from CLI
-flags.
+Install the agent skill once, then ask Codex or Claude Code to open the current
+diff as a guided review tour. The agent uses the `review-tour` npm package and
+local viewer under the hood, so day-to-day usage starts from your coding agent
+rather than from CLI flags.
 
 ## Highlights
 
@@ -33,17 +33,20 @@ pnpm `10` is only required when developing this repository from source.
 
 ## Quick Start
 
-Install the CLI once:
+Install the agent skill from the GitHub source:
+
+```bash
+npx skills add hiroingk/review-tour
+```
+
+Install the public npm package that provides the CLI and local viewer:
 
 ```bash
 npm install -g review-tour
 ```
 
-Install the skill and follow the prompts for your agent and scope:
-
-```bash
-npx skills add hiroingk/review-tour
-```
+The skill command uses the GitHub repository as its source. The npm package name
+is `review-tour`.
 
 From the repository you want to review, invoke the skill for your agent:
 
