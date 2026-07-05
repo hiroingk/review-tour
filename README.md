@@ -6,6 +6,8 @@ Review Tour turns local git diffs into guided, browser-based review tours.
 It is designed for reviewing AI-generated or branch-sized changes by moving from
 high-level chapters to the exact files and hunks that need attention.
 
+[Review Tour Website](https://hiroingk.github.io/review-tour/)
+
 [![skills.sh](https://skills.sh/b/hiroingk/review-tour)](https://skills.sh/hiroingk/review-tour)
 
 Install the agent skill once, then ask Codex or Claude Code to open the current
