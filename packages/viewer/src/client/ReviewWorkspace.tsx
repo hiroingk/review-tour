@@ -33,6 +33,7 @@ import { Checkbox } from '#/components/ui/checkbox';
 import { Input } from '#/components/ui/input';
 import { Label } from '#/components/ui/label';
 import { Popover, PopoverPopup, PopoverTrigger } from '#/components/ui/popover';
+import { ScrollArea } from '#/components/ui/scroll-area';
 import {
   Select,
   SelectItem,
@@ -748,29 +749,31 @@ function ReviewToolbar({
 
   return (
     <div className="border-b border-line px-4 py-3">
-      <div className="grid min-h-9 grid-cols-[auto_auto_minmax(0,1fr)_auto] items-center gap-3">
-        <ChapterReviewedToggle
-          completed={chapterCompleted}
-          onToggle={onChapterCompletedToggle}
-          title={
-            chapterCompleted
-              ? 'Mark current chapter as not reviewed'
-              : 'Mark current chapter as reviewed'
-          }
-          variant="icon"
-        />
+      <div className="grid min-h-9 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
         <IconButton
           disabled={!hasPreviousChapter}
           icon={ArrowLeft01Icon}
           label="Previous chapter"
           onClick={onPrevious}
         />
-        <ChapterPicker
-          activeChapter={chapter}
-          chapters={chapters}
-          onChapterSelect={onChapterSelect}
-          tour={tour}
-        />
+        <div className="mx-auto flex min-w-0 items-center gap-1.5">
+          <ChapterReviewedToggle
+            completed={chapterCompleted}
+            onToggle={onChapterCompletedToggle}
+            title={
+              chapterCompleted
+                ? 'Mark current chapter as not reviewed'
+                : 'Mark current chapter as reviewed'
+            }
+            variant="icon"
+          />
+          <ChapterPicker
+            activeChapter={chapter}
+            chapters={chapters}
+            onChapterSelect={onChapterSelect}
+            tour={tour}
+          />
+        </div>
         <IconButton
           disabled={!hasNextChapter}
           icon={ArrowRight01Icon}
@@ -801,7 +804,7 @@ function ChapterPicker({
         aria-label="Select chapter"
         render={
           <button
-            className={`focus-ring pressable hit-area-40 mx-auto inline-flex min-h-8 max-w-full items-center gap-1.5 rounded-[8px] px-2 text-sm font-medium text-fg transition-[background-color,color,scale] ${
+            className={`focus-ring pressable hit-area-40 inline-flex min-h-8 min-w-0 max-w-full items-center gap-1.5 rounded-[8px] px-2 text-sm font-medium text-fg transition-[background-color,color,scale] ${
               open ? 'bg-hover' : 'hover:bg-hover'
             }`}
             title="Select chapter"
@@ -819,23 +822,26 @@ function ChapterPicker({
       </PopoverTrigger>
       <PopoverPopup
         align="center"
-        className="w-[min(460px,calc(100vw-32px))] border-[0.5px] border-line bg-panel text-fg-secondary before:shadow-none [--viewport-inline-padding:0px] dark:before:shadow-none"
+        className="w-[min(460px,calc(100vw-32px))] rounded-2xl border-[0.5px] border-line bg-panel text-fg-secondary before:rounded-[calc(var(--radius-2xl)-1px)] before:shadow-none dark:before:shadow-none"
         sideOffset={8}
+        viewportClassName="py-0 [--viewport-inline-padding:0px]"
       >
-        <div className="grid max-h-[min(420px,calc(100vh-112px))] gap-1 overflow-auto p-1">
-          {chapters.map((chapter) => (
-            <ChapterPickerItem
-              active={chapter.id === activeChapter.id}
-              chapter={chapter}
-              key={chapter.id}
-              onSelect={() => {
-                setOpen(false);
-                onChapterSelect(chapter);
-              }}
-              stats={getChapterStats(tour, chapter)}
-            />
-          ))}
-        </div>
+        <ScrollArea className="max-h-[min(420px,calc(100vh-112px))]" scrollFade scrollbarGutter>
+          <div className="grid gap-1 p-1.5">
+            {chapters.map((chapter) => (
+              <ChapterPickerItem
+                active={chapter.id === activeChapter.id}
+                chapter={chapter}
+                key={chapter.id}
+                onSelect={() => {
+                  setOpen(false);
+                  onChapterSelect(chapter);
+                }}
+                stats={getChapterStats(tour, chapter)}
+              />
+            ))}
+          </div>
+        </ScrollArea>
       </PopoverPopup>
     </Popover>
   );
@@ -855,7 +861,7 @@ function ChapterPickerItem({
   return (
     <button
       aria-current={active ? 'true' : undefined}
-      className={`focus-ring grid min-h-[72px] w-full grid-cols-[42px_minmax(0,1fr)] items-center gap-3 rounded-[8px] px-3 py-2.5 text-left transition-[background-color,color,scale] duration-150 [transition-timing-function:var(--ease-polished)] active:scale-[0.96] ${
+      className={`focus-ring grid min-h-16 w-full grid-cols-[42px_minmax(0,1fr)] items-center gap-3 rounded-[8px] px-2.5 py-2 text-left transition-[background-color,color,scale] duration-150 [transition-timing-function:var(--ease-polished)] active:scale-[0.96] ${
         active ? 'bg-raised-strong text-fg' : 'text-fg-secondary hover:bg-hover hover:text-fg'
       }`}
       onClick={onSelect}
@@ -1161,7 +1167,7 @@ function ReviewCommentsPanel({
           ))}
         </ul>
       ) : (
-        <p className="mt-3 text-sm leading-[1.45] text-fg-muted">
+        <p className="text-sm leading-[1.45] text-fg-muted">
           Hover a code line and drag the + button to add a comment.
         </p>
       )}
