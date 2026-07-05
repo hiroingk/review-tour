@@ -547,15 +547,15 @@ export const demoTour: ReviewTour = {
           'Do the tests cover a tampered payload with a valid timestamp?',
           'Should STRIPE_WEBHOOK_SECRET rotate per environment?',
         ],
-        hunkIds: ['hunk-stripe-test-1', 'hunk-env-secret'],
+        hunkIds: ['hunk-env-secret', 'hunk-stripe-test-1'],
         files: [
-          {
-            path: 'src/server/webhooks/stripe.test.ts',
-            hunkIds: ['hunk-stripe-test-1'],
-          },
           {
             path: 'src/config/env.ts',
             hunkIds: ['hunk-env-secret'],
+          },
+          {
+            path: 'src/server/webhooks/stripe.test.ts',
+            hunkIds: ['hunk-stripe-test-1'],
           },
         ],
       },
