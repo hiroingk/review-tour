@@ -204,10 +204,10 @@ export function InstallPanel() {
       <div className="grid items-center gap-10 p-6 md:grid-cols-2 md:gap-14 md:p-14">
         <div>
           <h2 className="lp-heading text-[26px] leading-[1.3] md:text-[30px]">
-            Two ways in, one minute each.{' '}
+            Start with the skill.{' '}
             <span className="lp-heading-muted">
-              Add the skill so your agent builds tours for you, or install the CLI and generate them
-              from any repository.
+              Add the agent skill from the GitHub source, then install the review-tour npm package
+              for the local viewer and manual commands.
             </span>
           </h2>
           <a
@@ -228,8 +228,8 @@ export function InstallPanel() {
           />
           <CommandCard
             command={CLI_COMMAND}
-            description="Then run review-tour generate in any git repository."
-            label="CLI"
+            description="Provides the review-tour CLI used by the skill and manual commands."
+            label="npm package"
           />
         </div>
       </div>
