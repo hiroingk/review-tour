@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   publish:
@@ -20,11 +21,15 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
-          node-version: 22
+          node-version: 22.14.0
           registry-url: https://registry.npmjs.org
+          package-manager-cache: false
 
       - name: Enable Corepack
         run: corepack enable
+
+      - name: Install npm with trusted publishing support
+        run: npm install -g npm@11.18.0
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -53,7 +58,23 @@ jobs:
           esac
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
+      - name: Pack packages
+        id: pack
+        run: |
+          set -euo pipefail
+          PACK_DIR="$(mktemp -d)"
+          echo "dir=$PACK_DIR" >> "$GITHUB_OUTPUT"
+          pnpm --dir packages/schema pack --pack-destination "$PACK_DIR"
+          pnpm --dir packages/viewer pack --pack-destination "$PACK_DIR"
+          pnpm pack --pack-destination "$PACK_DIR"
+          ls -1 "$PACK_DIR"
+
       - name: Publish packages
-        run: pnpm publish -r --include-workspace-root --access public --no-git-checks --tag "${{ steps.dist_tag.outputs.tag }}"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          PACK_DIR="${{ steps.pack.outputs.dir }}"
+          DIST_TAG="${{ steps.dist_tag.outputs.tag }}"
+          npm publish "$PACK_DIR/review-tour-schema-$VERSION.tgz" --access public --provenance --tag "$DIST_TAG"
+          npm publish "$PACK_DIR/review-tour-viewer-$VERSION.tgz" --access public --provenance --tag "$DIST_TAG"
+          npm publish "$PACK_DIR/review-tour-$VERSION.tgz" --access public --provenance --tag "$DIST_TAG"

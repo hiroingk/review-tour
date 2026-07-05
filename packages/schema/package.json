@@ -3,6 +3,11 @@
   "version": "0.1.0",
   "description": "Shared schema and validation helpers for Review Tour artifacts.",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hiroingk/review-tour.git",
+    "directory": "packages/schema"
+  },
   "files": [
     "dist"
   ],

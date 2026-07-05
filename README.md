@@ -337,8 +337,8 @@ Review Tour follows the CLI + skill layout used by projects such as
 - `@review-tour/schema`: shared artifact schema package.
 - `@review-tour/viewer`: localhost viewer package used by the CLI.
 
-Use pnpm for release packing and publishing so `workspace:*` and catalog
-dependencies are converted to concrete package versions:
+Use pnpm for release packing so `workspace:*` and catalog dependencies are
+converted to concrete package versions:
 
 ```bash
 pnpm pack
@@ -359,9 +359,14 @@ git push origin main v0.2.0
 ```
 
 Pushing the tag runs the publish workflow, which verifies the tag matches
-`package.json`, runs the full verification suite, and publishes to npm.
-Pre-release versions such as `0.2.0-beta.1` publish under the matching npm
-dist-tag instead of `latest`.
+`package.json`, runs the full verification suite, packs publishable tarballs
+with pnpm, and publishes those tarballs to npm through trusted publishing with
+OIDC. Configure each public package (`review-tour`, `@review-tour/schema`, and
+`@review-tour/viewer`) on npmjs.com with GitHub Actions as the trusted
+publisher for `hiroingk/review-tour`, workflow file `publish.yml`, no
+environment name, and the `npm publish` action allowed before cutting a
+release. Pre-release versions such as `0.2.0-beta.1` publish under the matching
+npm dist-tag instead of `latest`.
 
 ## Security
 
