@@ -88,7 +88,7 @@ importers:
         version: link:..
       tailwindcss:
         specifier: ^4.3.1
-        version: 4.3.1
+        version: 4.3.2
       vite:
         specifier: npm:@voidzero-dev/vite-plus-core@0.2.2
         version: '@voidzero-dev/vite-plus-core@0.2.2(@types/node@26.0.0)(jiti@2.7.0)(typescript@6.0.3)(yaml@2.9.0)'
@@ -169,7 +169,7 @@ importers:
         version: 3.6.0
       tailwindcss:
         specifier: ^4.3.1
-        version: 4.3.1
+        version: 4.3.2
       vite:
         specifier: npm:@voidzero-dev/vite-plus-core@0.2.2
         version: '@voidzero-dev/vite-plus-core@0.2.2(@types/node@26.0.0)(jiti@2.7.0)(typescript@6.0.3)(yaml@2.9.0)'
@@ -1967,9 +1967,6 @@ packages:
 
   tailwind-merge@3.6.0:
     resolution: {integrity: sha512-uxL7qAVQriqRQPAyK3pj66VqskWqoZ37PW94jwOTwNfq/z9oyu1V+eqrZqtR2+fCiXdYOZe/Modt8GtvqNzu+w==}
-
-  tailwindcss@4.3.1:
-    resolution: {integrity: sha512-hk+TB1m+K8CYNrP6rjQaq/Y+4Zylwpa87mLYBKCunwnnQ9p+fHb7kmSfGqyEJoxF/O6CDyABWVFEafNSYKll+Q==}
 
   tailwindcss@4.3.2:
     resolution: {integrity: sha512-WtctNNSH8A9jlMIqxzuYumOHU5uGZyRv0Q5svQl+oEPy5w84YpBxdb7MdqyiSPQge5jTJ6zFQLq0PFygdccSBA==}
@@ -3772,8 +3769,6 @@ snapshots:
   strip-json-comments@5.0.3: {}
 
   tailwind-merge@3.6.0: {}
-
-  tailwindcss@4.3.1: {}
 
   tailwindcss@4.3.2: {}
 
