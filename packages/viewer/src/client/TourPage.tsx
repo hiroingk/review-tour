@@ -198,6 +198,13 @@ export function TourPage({
     }));
   };
 
+  const toggleReviewGroupReviewed = (groupProgressId: string) => {
+    updateReviewProgress((current) => ({
+      ...current,
+      groupIds: toggleSetValue(current.groupIds, groupProgressId),
+    }));
+  };
+
   const toggleReviewQuestionChecked = (questionId: string) => {
     updateReviewProgress((current) => ({
       ...current,
@@ -260,6 +267,7 @@ export function TourPage({
         onFoldsExpand={expandFolds}
         onFileViewedToggle={toggleFileViewed}
         onFileFilter={setFileFilter}
+        onGroupReviewedToggle={toggleReviewGroupReviewed}
         onPendingFilePathChange={setPendingFilePath}
         onReviewQuestionCheckedToggle={toggleReviewQuestionChecked}
         onSearchOpen={() => setSearchOpen(true)}
@@ -528,6 +536,7 @@ function ReadyTourPage({
   onFoldsExpand,
   onFileViewedToggle,
   onFileFilter,
+  onGroupReviewedToggle,
   onPendingFilePathChange,
   onReviewQuestionCheckedToggle,
   onSearchOpen,
@@ -553,6 +562,7 @@ function ReadyTourPage({
   onFoldsExpand: (foldIds: readonly string[]) => void;
   onFileViewedToggle: (fileId: string) => void;
   onFileFilter: (value: string) => void;
+  onGroupReviewedToggle: (groupProgressId: string) => void;
   onPendingFilePathChange: (path: string) => void;
   onReviewQuestionCheckedToggle: (questionId: string) => void;
   onSearchOpen: () => void;
@@ -635,6 +645,7 @@ function ReadyTourPage({
         onFoldsExpand={onFoldsExpand}
         onFileViewedToggle={onFileViewedToggle}
         onFileFilter={onFileFilter}
+        onGroupReviewedToggle={onGroupReviewedToggle}
         onChapterSelect={openReview}
         onCommentAdd={onCommentAdd}
         onCommentDelete={onCommentDelete}
@@ -658,6 +669,7 @@ function ReadyTourPage({
         onReviewQuestionCheckedToggle={onReviewQuestionCheckedToggle}
         onSearchOpen={onSearchOpen}
         tour={tour}
+        reviewedGroupIds={reviewProgress.groupIds}
         viewedFileIds={reviewProgress.fileIds}
       />
     </SymbolNavigationProvider>

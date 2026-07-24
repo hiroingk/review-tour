@@ -1,4 +1,5 @@
 import {
+  Fragment,
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
@@ -17,12 +18,15 @@ import SaveIcon from '@hugeicons/core-free-icons/SaveIcon';
 import Sent02Icon from '@hugeicons/core-free-icons/Sent02Icon';
 import SquareArrowVerticalIcon from '@hugeicons/core-free-icons/SquareArrowVerticalIcon';
 import type { LanguageInput } from 'shiki/types';
-import type { DiffFile, DiffLine } from 'review-tour/schema';
+import type { DiffFile, DiffLine, ReviewGroup } from 'review-tour/schema';
 import { Button } from '#/components/ui/button';
+import { Checkbox } from '#/components/ui/checkbox';
+import { Label } from '#/components/ui/label';
 import {
   buildSplitRows,
   compactContextRowsWithExpansion,
   getFileStats,
+  groupFileHunks,
   type ExpandableSplitFoldRow,
   type ExpandableSplitRow,
   type SplitLineRow,
@@ -41,6 +45,8 @@ import {
   type ReviewCommentRange,
   type ReviewCommentSide,
 } from './reviewComments';
+import { MarkdownText } from './MarkdownText';
+import { getReviewGroupProgressId } from './reviewProgress';
 import { usePendingSymbolJump, useSymbolNavigation } from './SymbolNavigation';
 import { splitSymbolSegments } from './symbolIndex';
 import { AppIcon, FileViewedToggle } from './ui';
@@ -111,6 +117,7 @@ type CollapseScrollTarget =
   | { kind: 'window'; top: number };
 
 export function DiffViewer({
+  chapterId,
   collapsedFileIds,
   comments,
   expandedFoldIds,
@@ -121,10 +128,15 @@ export function DiffViewer({
   onFileCollapsedChange,
   onFoldExpand,
   onFoldsExpand,
+  onGroupReviewedToggle,
   onFileViewedToggle,
+  reviewGroupsByFilePath,
+  reviewedGroupIds,
   settings,
+  tourId,
   viewedFileIds,
 }: {
+  chapterId: string;
   collapsedFileIds: ReadonlySet<string>;
   comments: readonly ReviewComment[];
   expandedFoldIds: ReadonlySet<string>;
@@ -135,8 +147,12 @@ export function DiffViewer({
   onFileCollapsedChange: (fileId: string, collapsed: boolean) => void;
   onFoldExpand: (foldId: string) => void;
   onFoldsExpand: (foldIds: readonly string[]) => void;
+  onGroupReviewedToggle: (groupProgressId: string) => void;
   onFileViewedToggle: (fileId: string) => void;
+  reviewGroupsByFilePath: ReadonlyMap<string, readonly ReviewGroup[]>;
+  reviewedGroupIds: ReadonlySet<string>;
   settings: DiffDisplaySettings;
+  tourId: string;
   viewedFileIds: ReadonlySet<string>;
 }) {
   const { t } = useI18n();
@@ -150,6 +166,7 @@ export function DiffViewer({
 
   return files.map((file) => (
     <FileDiff
+      chapterId={chapterId}
       collapsed={collapsedFileIds.has(file.id)}
       comments={comments.filter((comment) => comment.range.fileId === file.id)}
       expandedFoldIds={expandedFoldIds}
@@ -161,14 +178,19 @@ export function DiffViewer({
       onCollapsedChange={onFileCollapsedChange}
       onFoldExpand={onFoldExpand}
       onFoldsExpand={onFoldsExpand}
+      onGroupReviewedToggle={onGroupReviewedToggle}
       onViewedToggle={onFileViewedToggle}
+      reviewGroups={reviewGroupsByFilePath.get(file.path) ?? []}
+      reviewedGroupIds={reviewedGroupIds}
       settings={settings}
+      tourId={tourId}
       viewed={viewedFileIds.has(file.id)}
     />
   ));
 }
 
 function FileDiff({
+  chapterId,
   collapsed,
   comments,
   expandedFoldIds,
@@ -179,10 +201,15 @@ function FileDiff({
   onCollapsedChange,
   onFoldExpand,
   onFoldsExpand,
+  onGroupReviewedToggle,
   onViewedToggle,
+  reviewGroups,
+  reviewedGroupIds,
   settings,
+  tourId,
   viewed,
 }: {
+  chapterId: string;
   collapsed: boolean;
   comments: readonly ReviewComment[];
   expandedFoldIds: ReadonlySet<string>;
@@ -193,8 +220,12 @@ function FileDiff({
   onCollapsedChange: (fileId: string, collapsed: boolean) => void;
   onFoldExpand: (foldId: string) => void;
   onFoldsExpand: (foldIds: readonly string[]) => void;
+  onGroupReviewedToggle: (groupProgressId: string) => void;
   onViewedToggle: (fileId: string) => void;
+  reviewGroups: readonly ReviewGroup[];
+  reviewedGroupIds: ReadonlySet<string>;
   settings: DiffDisplaySettings;
+  tourId: string;
   viewed: boolean;
 }) {
   const { t } = useI18n();
@@ -215,6 +246,10 @@ function FileDiff({
         rows: compactContextRowsWithExpansion(buildSplitRows(hunk.lines), hunk.id),
       })),
     [file.hunks],
+  );
+  const hunkSections = useMemo(
+    () => groupFileHunks(hunkRows, reviewGroups),
+    [hunkRows, reviewGroups],
   );
   const foldIds = useMemo(
     () =>
@@ -538,33 +573,122 @@ function FileDiff({
       </header>
       {!collapsed ? (
         <div className="overflow-hidden rounded-b-[8px] border-x border-b border-hairline">
-          {hunkRows.map((hunk) => (
-            <HunkDiff
-              comments={comments}
-              draftBody={draftBody}
-              draftRange={draftRange}
-              expandedFolds={expandedFoldIds}
-              header={hunk.header}
-              hunkId={hunk.id}
-              key={hunk.id}
-              onDraftBodyChange={setDraftBody}
-              onDraftCancel={cancelDraftComment}
-              onDraftSave={saveDraftComment}
-              onExpandFold={expandFold}
-              onCommentDelete={onCommentDelete}
-              onCommentUpdate={onCommentUpdate}
-              onLinePointerEnter={updateLineSelection}
-              onLineSelectionStart={startLineSelection}
-              rows={hunk.rows}
-              selectionRange={selectionRange}
-              settings={settings}
-              syntaxLines={syntaxLines}
-              file={file}
-            />
-          ))}
+          {hunkSections.map((section, sectionIndex) => {
+            const hunks = section.hunks.map((hunk) => (
+              <HunkDiff
+                comments={comments}
+                draftBody={draftBody}
+                draftRange={draftRange}
+                expandedFolds={expandedFoldIds}
+                file={file}
+                header={hunk.header}
+                hunkId={hunk.id}
+                key={hunk.id}
+                onCommentDelete={onCommentDelete}
+                onCommentUpdate={onCommentUpdate}
+                onDraftBodyChange={setDraftBody}
+                onDraftCancel={cancelDraftComment}
+                onDraftSave={saveDraftComment}
+                onExpandFold={expandFold}
+                onLinePointerEnter={updateLineSelection}
+                onLineSelectionStart={startLineSelection}
+                rows={hunk.rows}
+                selectionRange={selectionRange}
+                settings={settings}
+                syntaxLines={syntaxLines}
+              />
+            ));
+
+            if (!section.group) {
+              return (
+                <Fragment key={`ungrouped:${section.hunks[0]?.id ?? sectionIndex}`}>
+                  {hunks}
+                </Fragment>
+              );
+            }
+
+            const progressId = getReviewGroupProgressId({
+              chapterId,
+              filePath: file.path,
+              groupId: section.group.id,
+              tourId,
+            });
+
+            return (
+              <ReviewGroupSection
+                completed={reviewedGroupIds.has(progressId)}
+                first={sectionIndex === 0}
+                group={section.group}
+                key={`${section.group.id}:${section.hunks[0]?.id ?? sectionIndex}`}
+                onCompletedToggle={() => onGroupReviewedToggle(progressId)}
+              >
+                {hunks}
+              </ReviewGroupSection>
+            );
+          })}
         </div>
       ) : null}
     </article>
+  );
+}
+
+function ReviewGroupSection({
+  children,
+  completed,
+  first,
+  group,
+  onCompletedToggle,
+}: {
+  children: ReactNode;
+  completed: boolean;
+  first: boolean;
+  group: ReviewGroup;
+  onCompletedToggle: () => void;
+}) {
+  const railClass =
+    group.risk === 'high'
+      ? 'before:bg-error'
+      : group.risk === 'medium'
+        ? 'before:bg-warning'
+        : 'before:bg-add';
+
+  return (
+    <section
+      aria-label={`Review group: ${group.title}`}
+      className={[
+        'relative before:absolute before:inset-y-0 before:left-0 before:z-[4] before:w-[3px]',
+        first ? '' : 'border-t border-line',
+        railClass,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <header
+        className={`grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-5 gap-y-3 px-6 py-5 transition-colors duration-200 [transition-timing-function:var(--ease-polished)] max-sm:sticky max-sm:left-0 max-sm:z-[3] max-sm:w-[calc(100vw-2.5rem)] max-sm:grid-cols-1 max-sm:px-5 ${
+          completed ? 'bg-add-soft' : 'bg-raised'
+        }`}
+      >
+        <div className="min-w-0">
+          <h3 className="text-[15px] font-semibold leading-snug tracking-[-0.01em] text-fg">
+            {group.title}
+          </h3>
+          <MarkdownText
+            className="mt-2 grid max-w-4xl gap-2 text-sm leading-[1.55] text-fg-muted"
+            text={group.summary}
+          />
+        </div>
+
+        <Label className="focus-within:ring-2 focus-within:ring-focus focus-within:ring-offset-1 focus-within:ring-offset-raised flex min-h-9 cursor-pointer items-center gap-2 rounded-[6px] bg-control px-3 py-2 text-xs font-medium text-fg-secondary shadow-control transition-[background-color,color,box-shadow] duration-150 [transition-timing-function:var(--ease-polished)] hover:bg-hover hover:text-fg max-sm:justify-self-start">
+          <Checkbox
+            checked={completed}
+            className="border-line-strong bg-panel data-checked:border-add data-checked:bg-add"
+            onCheckedChange={onCompletedToggle}
+          />
+          <span>{completed ? 'Reviewed' : 'Mark reviewed'}</span>
+        </Label>
+      </header>
+      {children}
+    </section>
   );
 }
 

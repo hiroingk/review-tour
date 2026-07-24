@@ -88,14 +88,27 @@ export type ReviewChapter = {
   index: number;
   title: string;
   summary: string;
-  risk: 'low' | 'medium' | 'high';
+  risk: ReviewRisk;
   rationale: string;
   reviewQuestions: string[];
   hunkIds: string[];
-  files: Array<{
-    path: string;
-    hunkIds: string[];
-  }>;
+  files: ReviewChapterFile[];
+};
+
+export type ReviewRisk = 'low' | 'medium' | 'high';
+
+export type ReviewChapterFile = {
+  path: string;
+  hunkIds: string[];
+  groups?: ReviewGroup[];
+};
+
+export type ReviewGroup = {
+  id: string;
+  title: string;
+  summary: string;
+  risk: ReviewRisk;
+  hunkIds: string[];
 };
 
 export type ReviewPrologue = {
@@ -118,6 +131,7 @@ export type ReviewWarning = {
     | 'PATCH_TRUNCATED'
     | 'BASE_BRANCH_GUESSED'
     | 'UNCOMMITTED_CHANGES_INCLUDED'
+    | 'UNTRACKED_FILES_SKIPPED'
     | 'LLM_PARTIAL_COVERAGE'
     | 'LARGE_HUNK_REUSED';
   message: string;
@@ -146,6 +160,7 @@ const warningCodes = [
   'PATCH_TRUNCATED',
   'BASE_BRANCH_GUESSED',
   'UNCOMMITTED_CHANGES_INCLUDED',
+  'UNTRACKED_FILES_SKIPPED',
   'LLM_PARTIAL_COVERAGE',
   'LARGE_HUNK_REUSED',
 ] as const;
@@ -469,6 +484,34 @@ function validateChapter(value: unknown, path: string, errors: string[]) {
     }
     expectString(chapterFile.path, `${filePath}.path`, errors);
     expectStringArray(chapterFile.hunkIds, `${filePath}.hunkIds`, errors);
+    if (chapterFile.groups !== undefined) {
+      validateReviewGroups(chapterFile.groups, `${filePath}.groups`, errors);
+    }
+  });
+}
+
+function validateReviewGroups(value: unknown, path: string, errors: string[]) {
+  if (!Array.isArray(value)) {
+    errors.push(`${path} must be an array`);
+    return;
+  }
+
+  value.forEach((group, index) => {
+    const groupPath = `${path}[${index}]`;
+    const reviewGroup = asRecord(group);
+    if (!reviewGroup) {
+      errors.push(`${groupPath} must be an object`);
+      return;
+    }
+
+    expectString(reviewGroup.id, `${groupPath}.id`, errors);
+    expectString(reviewGroup.title, `${groupPath}.title`, errors);
+    expectString(reviewGroup.summary, `${groupPath}.summary`, errors);
+    expectOneOf(reviewGroup.risk, risks, `${groupPath}.risk`, errors);
+    expectStringArray(reviewGroup.hunkIds, `${groupPath}.hunkIds`, errors);
+    if (Array.isArray(reviewGroup.hunkIds) && reviewGroup.hunkIds.length === 0) {
+      errors.push(`${groupPath}.hunkIds must include at least one hunk ID`);
+    }
   });
 }
 

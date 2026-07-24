@@ -1,4 +1,10 @@
-import type { DiffFile, DiffLine, ReviewChapter, ReviewTour } from 'review-tour/schema';
+import type {
+  DiffFile,
+  DiffLine,
+  ReviewChapter,
+  ReviewGroup,
+  ReviewTour,
+} from 'review-tour/schema';
 
 export type ChapterStats = {
   additions: number;
@@ -25,6 +31,12 @@ export type ExpandableSplitFoldRow = SplitFoldRow & {
 };
 
 export type ExpandableSplitRow = SplitLineRow | ExpandableSplitFoldRow;
+
+export type ReviewHunkSection<T extends { id: string }> = {
+  group: ReviewGroup | null;
+  groupIndex: number | null;
+  hunks: T[];
+};
 
 export function getChapterDiffFiles(tour: ReviewTour, chapter: ReviewChapter): DiffFile[] {
   if (Array.isArray(chapter.files) && chapter.files.length > 0) {
@@ -74,6 +86,42 @@ export function getFileStats(file: DiffFile) {
     }
   }
   return { additions, deletions };
+}
+
+export function groupFileHunks<T extends { id: string }>(
+  hunks: T[],
+  groups: readonly ReviewGroup[] = [],
+): ReviewHunkSection<T>[] {
+  const groupByHunkId = new Map<string, { group: ReviewGroup; index: number }>();
+  groups.forEach((group, index) => {
+    for (const hunkId of group.hunkIds) {
+      if (!groupByHunkId.has(hunkId)) {
+        groupByHunkId.set(hunkId, { group, index });
+      }
+    }
+  });
+
+  const sections: ReviewHunkSection<T>[] = [];
+  for (const hunk of hunks) {
+    const assignment = groupByHunkId.get(hunk.id);
+    const previous = sections.at(-1);
+    const sameGroup =
+      previous &&
+      (assignment ? previous.group?.id === assignment.group.id : previous.group === null);
+
+    if (previous && sameGroup) {
+      previous.hunks.push(hunk);
+      continue;
+    }
+
+    sections.push({
+      group: assignment?.group ?? null,
+      groupIndex: assignment?.index ?? null,
+      hunks: [hunk],
+    });
+  }
+
+  return sections;
 }
 
 export function buildSplitRows(lines: DiffLine[]): SplitLineRow[] {

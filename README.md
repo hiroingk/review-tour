@@ -4,7 +4,8 @@
 
 Review Tour turns local git diffs into guided, browser-based review tours.
 It is designed for reviewing AI-generated or branch-sized changes by moving from
-high-level chapters to the exact files and hunks that need attention.
+high-level chapters to checkable, AI-authored review groups attached to the exact
+files and hunks that need attention.
 
 [Review Tour Website](https://hiroingk.github.io/review-tour/)
 
@@ -19,8 +20,10 @@ rather than from CLI flags.
 
 - Review the current branch, staged changes, or working tree from Codex or
   Claude Code.
-- Open an interactive local viewer with AI-authored chapters, file navigation,
-  and diff review.
+- Open an interactive local viewer with AI-authored chapters, in-file review
+  groups, file navigation, and diff review.
+- Read the intent and risk above each related group of hunks, then check the
+  group off as it is reviewed.
 - Jump from symbol references in the diff to their definitions across files and
   chapters.
 - Use the viewer and landing page in English or Japanese. The browser language
@@ -89,8 +92,9 @@ The installed skill loads versioned workflow instructions from the installed CLI
 with `review-tour skills get core`. This keeps the agent workflow aligned with
 the CLI, viewer, and artifact schema you have installed.
 
-By default, the skill reviews the collected diff, creates AI-authored chapters,
-stores the official artifact in the OS cache, and opens the local viewer.
+By default, the skill reviews the collected diff, creates AI-authored chapters
+and file-level review groups, stores the official artifact in the OS cache, and
+opens the local viewer.
 
 ## Manual CLI Usage
 
@@ -116,7 +120,7 @@ review-tour open latest
 Review unstaged working tree changes:
 
 ```bash
-review-tour generate --mode working-tree
+review-tour generate --mode working-tree --include-untracked
 ```
 
 Review staged changes:
@@ -146,8 +150,8 @@ review-tour generate --no-open --json
 ## CLI Commands
 
 ```text
-review-tour generate [--pr <url|number>] [--base origin/main] [--head HEAD] [--mode base...head|working-tree|staged|custom] [--no-open] [--json]
-review-tour collect --json [--pr <url|number>] [--base origin/main] [--head HEAD] [--mode base...head|working-tree|staged|custom]
+review-tour generate [--pr <url|number>] [--base origin/main] [--head HEAD] [--mode base...head|working-tree|staged|custom] [--include-untracked] [--no-open] [--json]
+review-tour collect [--pr <url|number>] [--base origin/main] [--head HEAD] [--mode base...head|working-tree|staged|custom] [--include-untracked] [--output <path>] [--json]
 review-tour write --draft <path|-> --chapters <path|-> [--open] [--json]
 review-tour open [latest|tourId] [--json]
 review-tour serve [--port 4378]
@@ -160,27 +164,42 @@ review-tour version
 
 ### `generate`
 
-Collects the diff, creates deterministic file-based chapters, validates the
-artifact, stores it in the OS cache, and opens the viewer by default.
+Collects the diff, creates deterministic file-based chapters and review groups,
+validates the artifact, stores it in the OS cache, and starts the viewer server
+by default.
 
 ### `collect`
 
 Collects repository metadata, base branch information, parsed diff files, hunks,
 and hunk IDs. With `--pr`, it uses the GitHub CLI to collect a pull request diff
 without checking it out. This command emits a draft JSON payload that can be used
-by tools or skills to create custom chapters.
+by tools or skills to create custom chapters and file-level review groups.
+
+Use `--output <path>` without `--json` to write the full draft without sending a
+potentially large JSON payload to stdout. In working-tree mode,
+`--include-untracked` includes untracked, non-ignored files. Without that flag,
+the draft records an `UNTRACKED_FILES_SKIPPED` warning when tracked changes are
+still available. Collection uses 20 context lines so distant change blocks
+remain separate hunks that can be assigned to different review groups.
 
 ### `write`
 
-Merges a collected draft with a chapters JSON file, validates hunk coverage,
-writes the final artifact, and optionally opens the viewer. Use `-` for either
-input to read that JSON from stdin, such as `--chapters -` to pass AI-authored
-chapters without writing a temporary chapters file.
+Merges a collected draft with a chapters JSON file, validates chapter and review
+group hunk coverage, writes the final artifact, and optionally starts the viewer
+server and returns its URL.
+Use `-` for either input to read that JSON from stdin, such as `--chapters -` to
+pass AI-authored chapters without writing a temporary chapters file.
+
+File-level review groups are optional in the `review-tour/v1` schema so existing
+cached artifacts remain readable. The normal AI-authored workflow includes at
+least one group for every file in a chapter. Deterministic generation creates
+generic per-file groups, while `write` preserves omitted groups for legacy
+payloads and repairs uncovered hunks only when authored groups are present.
 
 ### `open`
 
-Starts the viewer server if needed and opens an existing artifact, such as
-`latest` or a specific tour ID.
+Starts the viewer server if needed and prints the URL for an existing artifact,
+such as `latest` or a specific tour ID. It does not launch a system browser.
 
 ### `serve`
 
@@ -290,6 +309,8 @@ been merged into a default branch candidate, the CLI updates the base to that
 merged target.
 
 Inferred bases are recorded as `BASE_BRANCH_GUESSED` warnings in the artifact.
+Skipped untracked files are recorded as `UNTRACKED_FILES_SKIPPED` warnings; rerun
+working-tree collection with `--include-untracked` to include them.
 
 ## Architecture
 

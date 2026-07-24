@@ -105,6 +105,67 @@ describe('review tour schema', () => {
     expect(result.ok).toBe(true);
   });
 
+  test('validates file-level review groups', () => {
+    const tour = createTour();
+    tour.tour.chapters[0].files[0].groups = [
+      {
+        id: 'group_example_flow',
+        title: 'Apply the example behavior',
+        summary: 'This group explains the intent behind the related diff hunk.',
+        risk: 'medium',
+        hunkIds: ['hunk_abc'],
+      },
+    ];
+
+    const result = validateReviewTour(tour);
+    expect(result.ok).toBe(true);
+  });
+
+  test('keeps review groups optional for older artifacts', () => {
+    const result = validateReviewTour(createTour());
+    expect(result.ok).toBe(true);
+  });
+
+  test('rejects an invalid review group shape', () => {
+    const tour = createTour();
+    tour.tour.chapters[0].files[0].groups = [
+      {
+        id: 'group_example_flow',
+        title: 'Apply the example behavior',
+        summary: '',
+        risk: 'urgent',
+        hunkIds: ['hunk_abc'],
+      },
+    ];
+
+    const result = validateReviewTour(tour);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.errors.join('\n')).toMatch(/files\[0\]\.groups\[0\]/);
+    }
+  });
+
+  test('rejects a review group with no hunk IDs', () => {
+    const tour = createTour();
+    tour.tour.chapters[0].files[0].groups = [
+      {
+        id: 'group_empty',
+        title: 'Empty group',
+        summary: 'This group has no diff hunks.',
+        risk: 'low',
+        hunkIds: [],
+      },
+    ];
+
+    const result = validateReviewTour(tour);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.errors.join('\n')).toMatch(
+        /files\[0\]\.groups\[0\]\.hunkIds must include at least one hunk ID/,
+      );
+    }
+  });
+
   test('validates large reused hunk warnings', () => {
     const result = validateReviewTour(
       createTour({
@@ -112,6 +173,21 @@ describe('review tour schema', () => {
           {
             code: 'LARGE_HUNK_REUSED',
             message: 'Large hunk hunk_abc is assigned to multiple chapters.',
+          },
+        ],
+      }),
+    );
+
+    expect(result.ok).toBe(true);
+  });
+
+  test('validates skipped untracked file warnings', () => {
+    const result = validateReviewTour(
+      createTour({
+        warnings: [
+          {
+            code: 'UNTRACKED_FILES_SKIPPED',
+            message: 'Two untracked files were skipped.',
           },
         ],
       }),

@@ -5,7 +5,15 @@ import {
   type ReviewTour,
   type ReviewTourDraft,
 } from 'review-tour/schema';
-import { getNumberOption, hasFlag, type ParsedArgs } from '../cliArgs.js';
+import {
+  assertAllowedOptions,
+  assertBooleanOptions,
+  assertNoPositionals,
+  assertStringOptions,
+  getNumberOption,
+  hasFlag,
+  type ParsedArgs,
+} from '../cliArgs.js';
 import { writeArtifact } from '../artifact/store.js';
 import { collectDraft } from './collect.js';
 import { launchViewer } from './open.js';
@@ -16,6 +24,12 @@ import { getCliVersion } from '../version.js';
 const version = getCliVersion();
 
 export async function generateCommand(args: ParsedArgs) {
+  validateGenerateArgs(args);
+  if (hasFlag(args, 'help')) {
+    process.stdout.write(generateHelpText());
+    return;
+  }
+
   const draft = collectDraft(args);
   const chapters = createFileBasedChapters(draft);
   const summary = `${chapters.length} file-based chapters covering ${getAllHunkIds(draft).length} hunks.`;
@@ -140,7 +154,8 @@ function createChapter(input: {
   files: DiffFile[];
   fallbackRisk: ReviewChapter['risk'];
 }): ReviewChapter | null {
-  const hunkIds = input.files.flatMap((file) => file.hunks.map((hunk) => hunk.id));
+  const files = input.files.filter((file) => file.hunks.length > 0);
+  const hunkIds = files.flatMap((file) => file.hunks.map((hunk) => hunk.id));
   if (hunkIds.length === 0) {
     return null;
   }
@@ -154,9 +169,18 @@ function createChapter(input: {
     rationale: input.rationale,
     reviewQuestions: input.reviewQuestions,
     hunkIds,
-    files: input.files.map((file) => ({
+    files: files.map((file) => ({
       path: file.path,
       hunkIds: file.hunks.map((hunk) => hunk.id),
+      groups: [
+        {
+          id: `group_${file.id}`,
+          title: `Review ${getFileName(file.path)}`,
+          summary: `Review the related changes in \`${file.path}\` as one implementation unit.`,
+          risk: inferRisk([file], input.fallbackRisk),
+          hunkIds: file.hunks.map((hunk) => hunk.id),
+        },
+      ],
     })),
   };
 }
@@ -198,4 +222,42 @@ function isConfigSchemaOrGeneratedPath(filePath: string) {
 
 function getAllHunkIds(draft: ReviewTourDraft) {
   return draft.diff.files.flatMap((file) => file.hunks.map((hunk) => hunk.id));
+}
+
+function getFileName(filePath: string) {
+  return filePath.split('/').filter(Boolean).at(-1) ?? filePath;
+}
+
+export function validateGenerateArgs(args: ParsedArgs) {
+  assertNoPositionals(args, 'generate');
+  assertAllowedOptions(args, 'generate', [
+    'base',
+    'head',
+    'help',
+    'include-untracked',
+    'json',
+    'mode',
+    'no-open',
+    'port',
+    'pr',
+  ]);
+  assertBooleanOptions(args, ['help', 'include-untracked', 'json', 'no-open']);
+  assertStringOptions(args, ['base', 'head', 'mode', 'port', 'pr']);
+}
+
+function generateHelpText() {
+  return `review-tour generate
+
+Usage:
+  review-tour generate [--pr <url|number>] [--base origin/main] [--head HEAD]
+    [--mode base...head|working-tree|staged|custom] [--include-untracked]
+    [--no-open] [--port 4378] [--json]
+
+Options:
+  --include-untracked  Include untracked, non-ignored files in working-tree mode.
+  --no-open            Write the artifact without starting the viewer server.
+  --port <number>      Preferred viewer port.
+  --json               Print machine-readable result JSON.
+  --help               Show this help.
+`;
 }
