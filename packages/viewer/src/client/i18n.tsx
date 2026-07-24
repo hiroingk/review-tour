@@ -123,6 +123,7 @@ const japaneseMessages = {
   System: 'システム',
   Theme: 'テーマ',
   Unified: '統合',
+  'Unified (Auto)': '統合（自動）',
   'Use dark mode': 'ダークモードを使用',
   'Use light mode': 'ライトモードを使用',
   'What it does': '変更内容',

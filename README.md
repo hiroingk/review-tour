@@ -1,8 +1,12 @@
 # Review Tour
 
+<img width="2434" height="1574" alt="review-tour-thumbnail" src="https://github.com/user-attachments/assets/81ab6111-39a9-4ff4-94bc-3a607938847c" />
+
 Review Tour turns local git diffs into guided, browser-based review tours.
 It is designed for reviewing AI-generated or branch-sized changes by moving from
 high-level chapters to the exact files and hunks that need attention.
+
+[Review Tour Website](https://hiroingk.github.io/review-tour/)
 
 [![skills.sh](https://skills.sh/b/hiroingk/review-tour)](https://skills.sh/hiroingk/review-tour)
 

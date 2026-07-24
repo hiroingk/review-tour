@@ -1,6 +1,8 @@
 export type DiffLayout = 'split' | 'unified';
 export type DiffSyntaxTheme = 'auto' | 'github-dark' | 'github-light' | 'plain';
 
+export const NARROW_DIFF_LAYOUT_MEDIA_QUERY = '(max-width: 47.999rem)';
+
 export type DiffDisplaySettings = {
   backgrounds: boolean;
   fontFamily: 'geist-mono' | 'system-mono';
@@ -62,6 +64,10 @@ export function writeDiffDisplaySettings(settings: DiffDisplaySettings) {
   } catch {
     // Ignore storage failures; the current page still uses the selected settings.
   }
+}
+
+export function resolveDiffLayout(layout: DiffLayout, narrowViewport: boolean): DiffLayout {
+  return narrowViewport ? 'unified' : layout;
 }
 
 function normalizeDiffDisplaySettings(value: Record<string, unknown>): DiffDisplaySettings {

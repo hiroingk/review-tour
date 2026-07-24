@@ -7,6 +7,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from 'react';
 import ArrowLeft01Icon from '@hugeicons/core-free-icons/ArrowLeft01Icon';
 import ArrowRight01Icon from '@hugeicons/core-free-icons/ArrowRight01Icon';
@@ -45,7 +46,11 @@ import { Switch } from '#/components/ui/switch';
 import { toastManager } from '#/components/ui/toast';
 import { ToggleGroup, ToggleGroupItem } from '#/components/ui/toggle-group';
 import { getChapterDiffFiles, getChapterStats, getFileStats } from '../reviewModel';
-import type { DiffDisplaySettings } from './diffSettings';
+import {
+  type DiffDisplaySettings,
+  NARROW_DIFF_LAYOUT_MEDIA_QUERY,
+  resolveDiffLayout,
+} from './diffSettings';
 import type { DiffFoldState } from './diffFoldState';
 import { fileDomId } from './dom';
 import { DiffViewer } from './DiffViewer';
@@ -136,6 +141,11 @@ export function ReviewWorkspace({
   const [reviewPaneWidth, setReviewPaneWidth] = useState(readReviewPaneWidth);
   const [resizingReviewPane, setResizingReviewPane] = useState(false);
   const [activeTab, setActiveTab] = useState<ReviewWorkspaceTab>('chapters');
+  const narrowViewport = useMediaQuery(NARROW_DIFF_LAYOUT_MEDIA_QUERY);
+  const resolvedDiffSettings = useMemo(() => {
+    const layout = resolveDiffLayout(diffSettings.layout, narrowViewport);
+    return layout === diffSettings.layout ? diffSettings : { ...diffSettings, layout };
+  }, [diffSettings, narrowViewport]);
   const workspaceStyle = {
     '--review-pane-width': `${reviewPaneWidth}px`,
   } as CSSProperties;
@@ -232,6 +242,7 @@ export function ReviewWorkspace({
         comments={comments}
         commentsCount={comments.length}
         diffSettings={diffSettings}
+        resolvedDiffLayout={resolvedDiffSettings.layout}
         onActiveTabChange={setActiveTab}
         onBack={onBack}
         onDiffSettingsChange={onDiffSettingsChange}
@@ -372,7 +383,7 @@ export function ReviewWorkspace({
                 onFoldExpand={onFoldExpand}
                 onFoldsExpand={onFoldsExpand}
                 onFileViewedToggle={onFileViewedToggle}
-                settings={diffSettings}
+                settings={resolvedDiffSettings}
                 viewedFileIds={viewedFileIds}
               />
             </div>
@@ -394,6 +405,7 @@ function ReviewWorkspaceHeader({
   comments,
   commentsCount,
   diffSettings,
+  resolvedDiffLayout,
   onActiveTabChange,
   onBack,
   onDiffSettingsChange,
@@ -404,6 +416,7 @@ function ReviewWorkspaceHeader({
   comments: readonly ReviewComment[];
   commentsCount: number;
   diffSettings: DiffDisplaySettings;
+  resolvedDiffLayout: DiffDisplaySettings['layout'];
   onActiveTabChange: (tab: ReviewWorkspaceTab) => void;
   onBack: () => void;
   onDiffSettingsChange: (settings: DiffDisplaySettings) => void;
@@ -423,7 +436,11 @@ function ReviewWorkspaceHeader({
         <div className="flex shrink-0 items-center gap-1.5">
           <CopyReviewPromptButton comments={comments} repository={repository} />
           <IconButton icon={Search01Icon} label={t('Search')} onClick={onSearchOpen} />
-          <DisplaySettingsButton settings={diffSettings} onSettingsChange={onDiffSettingsChange} />
+          <DisplaySettingsButton
+            resolvedLayout={resolvedDiffLayout}
+            settings={diffSettings}
+            onSettingsChange={onDiffSettingsChange}
+          />
         </div>
       </div>
     </header>
@@ -921,13 +938,16 @@ function ChapterPickerItem({
 
 function DisplaySettingsButton({
   onSettingsChange,
+  resolvedLayout,
   settings,
 }: {
   onSettingsChange: (settings: DiffDisplaySettings) => void;
+  resolvedLayout: DiffDisplaySettings['layout'];
   settings: DiffDisplaySettings;
 }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
+  const layoutIsAutomatic = resolvedLayout !== settings.layout;
 
   const updateSetting = <Key extends keyof DiffDisplaySettings>(
     key: Key,
@@ -1019,9 +1039,9 @@ function DisplaySettingsButton({
             onChange={(value) => updateSetting('layout', value as DiffDisplaySettings['layout'])}
             options={[
               ['split', t('Split')],
-              ['unified', t('Unified')],
+              ['unified', layoutIsAutomatic ? t('Unified (Auto)') : t('Unified')],
             ]}
-            value={settings.layout}
+            value={resolvedLayout}
           />
           <SettingSelect
             label={t('Indicators')}
@@ -1539,6 +1559,20 @@ function readReviewPaneWidth() {
   } catch {
     return DEFAULT_REVIEW_PANE_WIDTH;
   }
+}
+
+function useMediaQuery(query: string) {
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => {
+      const mediaQuery = window.matchMedia(query);
+      mediaQuery.addEventListener('change', onStoreChange);
+      return () => mediaQuery.removeEventListener('change', onStoreChange);
+    },
+    [query],
+  );
+  const getSnapshot = useCallback(() => window.matchMedia(query).matches, [query]);
+
+  return useSyncExternalStore(subscribe, getSnapshot, () => false);
 }
 
 function writeReviewPaneWidth(width: number) {
