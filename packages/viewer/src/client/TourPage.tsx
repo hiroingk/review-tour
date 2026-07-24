@@ -17,6 +17,7 @@ import {
   type DiffFoldState,
 } from './diffFoldState';
 import { fileDomId } from './dom';
+import { type Translator, useI18n } from './i18n';
 import { readReviewComments, writeReviewComments, type ReviewComment } from './reviewComments';
 import { ReviewWorkspace } from './ReviewWorkspace';
 import { SymbolNavigationProvider } from './SymbolNavigation';
@@ -61,6 +62,7 @@ export function TourPage({
   repoHash?: string;
   tourId: string;
 }) {
+  const { t } = useI18n();
   const [state, setState] = useState<TourState>({ status: 'loading' });
   const [selectedId, setSelectedId] = useState('');
   const [fileFilter, setFileFilter] = useState('');
@@ -234,7 +236,7 @@ export function TourPage({
   }
 
   if (state.status === 'error') {
-    return <ShellMessage message={state.message} tone="error" />;
+    return <ShellMessage message={localizeTourError(state.message, t)} tone="error" />;
   }
 
   const resolvedSelectedId =
@@ -561,6 +563,7 @@ function ReadyTourPage({
   selectedId: string;
   tour: ReviewTour;
 }) {
+  const { t } = useI18n();
   const selectedChapter =
     tour.tour.chapters.find((chapter) => chapter.id === selectedId) ??
     tour.tour.chapters[0] ??
@@ -590,7 +593,7 @@ function ReadyTourPage({
   }, [mode, onPendingFilePathChange, pendingFilePath, selectedId]);
 
   if (!selectedChapter) {
-    return <ShellMessage message="No chapters in this tour." />;
+    return <ShellMessage message={t('No chapters in this tour.')} />;
   }
 
   const selectReviewChapter = (chapterId: string) => {
@@ -743,4 +746,10 @@ function handleCommandPaletteTarget({
 function getRouteChapterId(tour: ReviewTour, chapterId?: string) {
   if (!chapterId) return undefined;
   return tour.tour.chapters.some((chapter) => chapter.id === chapterId) ? chapterId : undefined;
+}
+
+function localizeTourError(message: string, t: Translator) {
+  if (message === 'Missing repo query.') return t('Missing repo query.');
+  if (message === 'Failed to load tour.') return t('Failed to load tour.');
+  return message;
 }

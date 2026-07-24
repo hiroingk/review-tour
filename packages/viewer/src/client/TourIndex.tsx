@@ -4,6 +4,7 @@ import { Link } from '@tanstack/react-router';
 import { Skeleton } from '#/components/ui/skeleton';
 import type { ListedTour } from '../tourCache';
 import { fetchTours } from './api';
+import { LanguageControl, type Translator, useI18n } from './i18n';
 import { ThemeModeControl } from './theme';
 import { AppIcon } from './ui';
 
@@ -13,6 +14,7 @@ type ToursState =
   | { status: 'error'; message: string };
 
 export function TourIndex() {
+  const { locale, t } = useI18n();
   const [state, setState] = useState<ToursState>({ status: 'loading' });
 
   useEffect(() => {
@@ -47,20 +49,23 @@ export function TourIndex() {
             <p className="text-xs font-bold uppercase tracking-[0.08em] text-fg-muted">
               Review Tour
             </p>
-            <h1 className="mt-2 text-3xl font-bold leading-tight">Generated tours</h1>
+            <h1 className="mt-2 text-3xl font-bold leading-tight">{t('Generated tours')}</h1>
           </div>
-          <ThemeModeControl />
+          <div className="flex items-center gap-2">
+            <LanguageControl />
+            <ThemeModeControl />
+          </div>
         </header>
 
         {state.status === 'loading' ? (
           <TourIndexSkeleton />
         ) : state.status === 'error' ? (
           <p className="surface-panel mt-8 rounded-[8px] bg-error-soft p-4 text-sm leading-[1.55] text-error">
-            {state.message}
+            {localizeToursError(state.message, t)}
           </p>
         ) : repositoryGroups.length === 0 ? (
           <p className="surface mt-8 rounded-[8px] bg-panel px-5 py-4 text-sm text-fg-muted">
-            No branches with review tour artifacts found.
+            {t('No branches with review tour artifacts found.')}
           </p>
         ) : (
           <div className="mt-7 grid gap-5">
@@ -77,7 +82,9 @@ export function TourIndex() {
                     <p className="mt-0.5 font-mono text-xs text-fg-faint">{group.repoHash}</p>
                   </div>
                   <span className="mono-tabular text-xs text-fg-muted">
-                    {group.branches.length} branch{group.branches.length === 1 ? '' : 'es'}
+                    {t(group.branches.length === 1 ? '{count} branch' : '{count} branches', {
+                      count: group.branches.length,
+                    })}
                   </span>
                 </header>
                 <div>
@@ -92,14 +99,14 @@ export function TourIndex() {
                       <AppIcon className="text-fg-muted" icon={GitBranchIcon} size={16} />
                       <span className="min-w-0">
                         <strong className="block truncate font-mono text-sm font-semibold">
-                          {tour.branchName ?? 'unknown'}
+                          {tour.branchName ?? t('unknown')}
                         </strong>
                         <span className="mt-0.5 block truncate text-xs text-fg-muted">
-                          Latest artifact
+                          {t('Latest artifact')}
                         </span>
                       </span>
                       <time className="mono-tabular text-right text-xs text-fg-faint">
-                        {formatTourDate(tour.createdAt)}
+                        {formatTourDate(tour.createdAt, locale)}
                       </time>
                     </Link>
                   ))}
@@ -175,16 +182,20 @@ function groupToursByRepository(tours: ListedTour[]): RepositoryTourGroup[] {
     .sort((a, b) => a.repositoryName.localeCompare(b.repositoryName));
 }
 
-function formatTourDate(value?: string) {
+function formatTourDate(value: string | undefined, locale: 'en' | 'ja') {
   if (!value) return '';
 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
 
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(locale === 'ja' ? 'ja-JP' : 'en', {
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
     month: 'short',
   }).format(date);
+}
+
+function localizeToursError(message: string, t: Translator) {
+  return message === 'Failed to load tours.' ? t('Failed to load tours.') : message;
 }

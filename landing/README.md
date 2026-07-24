@@ -18,6 +18,10 @@ cycles chapters until the visitor interacts.
 The demo data in `src/demo/demoTour.ts` is a hand-written `ReviewTour` artifact that follows
 the internal schema types, so schema changes surface here as type errors.
 
+The site supports English and Japanese. Marketing copy lives in `src/i18n.tsx`, while
+`src/demo/demoTour.ts` keeps the localized demo artifact content aligned with the selected
+viewer locale.
+
 Note: the app intentionally renders without React `StrictMode` — the viewer's file tree
 (`@pierre/trees`) wires an imperative model in effects and does not survive StrictMode's
 double-invocation, matching how the real viewer app mounts it.

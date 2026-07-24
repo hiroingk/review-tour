@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useLandingI18n } from '../i18n';
 import { ProductDemo } from './ProductDemo';
 
 /* The desktop viewport rendered inside the iframe: 4px top padding + 44px title bar +
@@ -34,6 +35,7 @@ export function DemoFramePage() {
 }
 
 function ScaledDemoFrame() {
+  const { locale, t } = useLandingI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
 
@@ -60,7 +62,7 @@ function ScaledDemoFrame() {
           aria-hidden
           className="pointer-events-none origin-top-left border-0"
           loading="lazy"
-          src={`${import.meta.env.BASE_URL}?demo-frame`}
+          src={`${import.meta.env.BASE_URL}?demo-frame&locale=${locale}`}
           style={{
             width: DEMO_STAGE_WIDTH,
             height: DEMO_STAGE_HEIGHT,
@@ -68,7 +70,7 @@ function ScaledDemoFrame() {
             background: 'transparent',
           }}
           tabIndex={-1}
-          title="Review Tour desktop demo preview"
+          title={t('Review Tour desktop demo preview')}
         />
       ) : null}
     </div>

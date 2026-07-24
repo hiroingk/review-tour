@@ -49,6 +49,7 @@ import type { DiffDisplaySettings } from './diffSettings';
 import type { DiffFoldState } from './diffFoldState';
 import { fileDomId } from './dom';
 import { DiffViewer } from './DiffViewer';
+import { LanguageControl, useI18n } from './i18n';
 import { MarkdownInlineText, MarkdownText } from './MarkdownText';
 import {
   formatReviewCommentsForCodex,
@@ -123,6 +124,7 @@ export function ReviewWorkspace({
   tour: ReviewTour;
   viewedFileIds: ReadonlySet<string>;
 }) {
+  const { locale, t } = useI18n();
   const workspaceRef = useRef<HTMLElement>(null);
   const files = useMemo(() => getChapterDiffFiles(tour, chapter), [tour, chapter]);
   const visibleFiles = useMemo(() => {
@@ -267,7 +269,7 @@ export function ReviewWorkspace({
               text={chapter.summary}
             />
 
-            <SideBlock title="Review questions">
+            <SideBlock title={t('Review questions')}>
               {chapter.reviewQuestions.length ? (
                 <ul className="mt-4 grid gap-1.5 text-sm leading-[1.45] text-fg-secondary">
                   {chapter.reviewQuestions.map((question, index) => {
@@ -289,16 +291,16 @@ export function ReviewWorkspace({
                   })}
                 </ul>
               ) : (
-                <p className="mt-4 text-sm text-fg-muted">No review questions.</p>
+                <p className="mt-4 text-sm text-fg-muted">{t('No review questions.')}</p>
               )}
             </SideBlock>
 
-            <SideBlock title={`Files (${stats.files})`}>
+            <SideBlock title={t('Files ({count})', { count: stats.files })}>
               <Input
-                aria-label="Filter files"
+                aria-label={t('Filter files')}
                 className="mt-4 rounded-[6px] bg-control text-xs [&_[data-slot=input]]:text-xs"
                 onChange={(event) => onFileFilter(event.target.value)}
-                placeholder="Filter files..."
+                placeholder={t('Filter files...')}
                 size="sm"
                 type="search"
                 value={fileFilter}
@@ -307,14 +309,14 @@ export function ReviewWorkspace({
                 <FileList
                   files={visibleFiles}
                   onFileSelect={() => setActiveTab('chapters')}
-                  treeKey={visibleFiles.map((file) => file.path).join('\n')}
+                  treeKey={`${locale}\n${visibleFiles.map((file) => file.path).join('\n')}`}
                   viewedFileIds={viewedFileIds}
                 />
               </div>
             </SideBlock>
           </div>
           <div
-            aria-label="Resize review pane"
+            aria-label={t('Resize review pane')}
             aria-orientation="vertical"
             aria-valuemax={MAX_REVIEW_PANE_WIDTH}
             aria-valuemin={MIN_REVIEW_PANE_WIDTH}
@@ -337,7 +339,7 @@ export function ReviewWorkspace({
             }}
             role="separator"
             tabIndex={0}
-            title="Resize review pane"
+            title={t('Resize review pane')}
           >
             <span
               aria-hidden="true"
@@ -408,6 +410,7 @@ function ReviewWorkspaceHeader({
   onSearchOpen: () => void;
   repository: ReviewTour['repository'];
 }) {
+  const { t } = useI18n();
   return (
     <header className="grid min-h-[56px] grid-cols-[var(--review-pane-width)_minmax(0,1fr)] border-b border-line bg-panel max-lg:grid-cols-1">
       <ReviewRepositoryHeader onBack={onBack} repository={repository} />
@@ -419,7 +422,7 @@ function ReviewWorkspaceHeader({
         />
         <div className="flex shrink-0 items-center gap-1.5">
           <CopyReviewPromptButton comments={comments} repository={repository} />
-          <IconButton icon={Search01Icon} label="Search" onClick={onSearchOpen} />
+          <IconButton icon={Search01Icon} label={t('Search')} onClick={onSearchOpen} />
           <DisplaySettingsButton settings={diffSettings} onSettingsChange={onDiffSettingsChange} />
         </div>
       </div>
@@ -434,9 +437,15 @@ function ReviewRepositoryHeader({
   onBack: () => void;
   repository: ReviewTour['repository'];
 }) {
+  const { t } = useI18n();
   return (
     <div className="grid min-h-[56px] grid-cols-[auto_minmax(0,1fr)] items-center gap-3 border-r border-line px-4 py-2 max-lg:border-r-0">
-      <IconButton icon={ChevronLeftIcon} label="Back to list" onClick={onBack} variant="ghost" />
+      <IconButton
+        icon={ChevronLeftIcon}
+        label={t('Back to list')}
+        onClick={onBack}
+        variant="ghost"
+      />
       <div
         className="min-w-0"
         title={`${repository.name} - ${repository.currentBranch} -> ${repository.baseBranch}`}
@@ -468,6 +477,7 @@ function ReviewWorkspaceTabs({
   commentsCount: number;
   onActiveTabChange: (tab: ReviewWorkspaceTab) => void;
 }) {
+  const { t } = useI18n();
   const handleValueChange = (values: string[]) => {
     const nextTab = values[0];
     if (nextTab === 'chapters' || nextTab === 'comments') {
@@ -477,7 +487,7 @@ function ReviewWorkspaceTabs({
 
   return (
     <ToggleGroup
-      aria-label="Review content"
+      aria-label={t('Review content')}
       className="rounded-[10px] bg-control p-0.5 shadow-control"
       onValueChange={handleValueChange}
       size="sm"
@@ -485,19 +495,19 @@ function ReviewWorkspaceTabs({
     >
       <ToggleGroupItem
         className="min-h-8 gap-1.5 rounded-[8px] px-2.5"
-        title="Show chapter diffs"
+        title={t('Show chapter diffs')}
         value="chapters"
       >
         <AppIcon icon={FileDiffIcon} size={14} />
-        <span>Chapters</span>
+        <span>{t('Chapters')}</span>
       </ToggleGroupItem>
       <ToggleGroupItem
         className="min-h-8 gap-1.5 rounded-[8px] px-2.5"
-        title="Show review comments"
+        title={t('Show review comments')}
         value="comments"
       >
         <AppIcon icon={Comment01Icon} size={14} />
-        <span>Comments</span>
+        <span>{t('Comments')}</span>
         <span className="mono-tabular min-w-4 rounded-full bg-raised px-1.5 text-[10px] leading-4 text-fg-muted shadow-control">
           {commentsCount}
         </span>
@@ -513,11 +523,12 @@ function CopyReviewPromptButton({
   comments: readonly ReviewComment[];
   repository: ReviewTour['repository'];
 }) {
+  const { locale, t } = useI18n();
   const [open, setOpen] = useState(false);
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
   const prompt = useMemo(
-    () => formatReviewPromptForCodingTool(comments, repository),
-    [comments, repository],
+    () => formatReviewPromptForCodingTool(comments, repository, locale),
+    [comments, locale, repository],
   );
 
   useEffect(() => {
@@ -527,16 +538,19 @@ function CopyReviewPromptButton({
     return () => window.clearTimeout(timeout);
   }, [copyState]);
 
-  const showCopyToast = useCallback((copied: boolean) => {
-    toastManager.add({
-      description: copied
-        ? 'Review prompt copied to clipboard.'
-        : 'Could not copy the review prompt.',
-      id: 'review-prompt-copy-status',
-      title: copied ? 'Copied as prompt' : 'Copy failed',
-      type: copied ? 'success' : 'error',
-    });
-  }, []);
+  const showCopyToast = useCallback(
+    (copied: boolean) => {
+      toastManager.add({
+        description: copied
+          ? t('Review prompt copied to clipboard.')
+          : t('Could not copy the review prompt.'),
+        id: 'review-prompt-copy-status',
+        title: copied ? t('Copied as prompt') : t('Copy failed'),
+        type: copied ? 'success' : 'error',
+      });
+    },
+    [t],
+  );
 
   const copyPrompt = useCallback(async () => {
     if (comments.length === 0 || typeof navigator === 'undefined') return false;
@@ -571,10 +585,10 @@ function CopyReviewPromptButton({
 
   const label =
     copyState === 'copied'
-      ? 'Copied review prompt'
+      ? t('Copied review prompt')
       : copyState === 'failed'
-        ? 'Failed to copy review prompt'
-        : 'Copy review prompt';
+        ? t('Failed to copy review prompt')
+        : t('Copy review prompt');
 
   return (
     <Popover onOpenChange={(nextOpen: boolean) => setOpen(nextOpen)} open={open}>
@@ -596,12 +610,12 @@ function CopyReviewPromptButton({
           <AppIcon icon={TextSelectIcon} size={15} />
         </button>
         <PopoverTrigger
-          aria-label="Open prompt actions"
+          aria-label={t('Open prompt actions')}
           render={
             <button
               className="focus-ring hit-area-40 grid h-full place-items-center border-l border-line transition-colors duration-150 [transition-timing-function:var(--ease-polished)] disabled:cursor-default disabled:hover:text-fg-muted"
               disabled={comments.length === 0}
-              title="Open prompt actions"
+              title={t('Open prompt actions')}
               type="button"
             />
           }
@@ -624,14 +638,14 @@ function CopyReviewPromptButton({
         <div className="grid gap-0.5 p-2">
           <ReviewPromptMenuItem
             icon={TextSelectIcon}
-            label="Copy as prompt"
+            label={t('Copy as prompt')}
             onClick={() => {
               void copyPrompt().then(() => setOpen(false));
             }}
           />
           <div className="-mx-2 h-px bg-line" />
           <p className="mt-1 px-2 py-0.5 text-[10px] font-semibold uppercase leading-4 tracking-[0.08em] text-fg-faint">
-            Open in
+            {t('Open in')}
           </p>
           {reviewPromptTools.map((tool) => (
             <ReviewPromptMenuItem
@@ -654,21 +668,34 @@ type ReviewPromptToolScheme = 'codex' | 'claude';
 function formatReviewPromptForCodingTool(
   comments: readonly ReviewComment[],
   repository: ReviewTour['repository'],
+  locale: 'en' | 'ja',
 ) {
-  const commentsPrompt = formatReviewCommentsForCodex(comments);
+  const commentsPrompt = formatReviewCommentsForCodex(comments, locale);
   if (!commentsPrompt) return '';
 
-  return [
-    'Review Tour generated the following review prompt.',
-    '',
-    'Repository context:',
-    `- Repository: ${repository.name}`,
-    `- Current branch: ${repository.currentBranch}`,
-    `- Base branch: ${repository.baseBranch}`,
-    `- Local path: ${repository.root}`,
-    '',
-    commentsPrompt,
-  ].join('\n');
+  return locale === 'ja'
+    ? [
+        'Review Tour が次のレビュープロンプトを生成しました。',
+        '',
+        'リポジトリ情報:',
+        `- リポジトリ: ${repository.name}`,
+        `- 現在のブランチ: ${repository.currentBranch}`,
+        `- ベースブランチ: ${repository.baseBranch}`,
+        `- ローカルパス: ${repository.root}`,
+        '',
+        commentsPrompt,
+      ].join('\n')
+    : [
+        'Review Tour generated the following review prompt.',
+        '',
+        'Repository context:',
+        `- Repository: ${repository.name}`,
+        `- Current branch: ${repository.currentBranch}`,
+        `- Base branch: ${repository.baseBranch}`,
+        `- Local path: ${repository.root}`,
+        '',
+        commentsPrompt,
+      ].join('\n');
 }
 
 function createReviewPromptToolUrl({
@@ -743,6 +770,7 @@ function ReviewToolbar({
   onPrevious: () => void;
   tour: ReviewTour;
 }) {
+  const { t } = useI18n();
   const chapterIndex = chapters.findIndex((item) => item.id === chapter.id);
   const hasPreviousChapter = chapterIndex > 0;
   const hasNextChapter = chapterIndex >= 0 && chapterIndex < chapters.length - 1;
@@ -753,7 +781,7 @@ function ReviewToolbar({
         <IconButton
           disabled={!hasPreviousChapter}
           icon={ArrowLeft01Icon}
-          label="Previous chapter"
+          label={t('Previous chapter')}
           onClick={onPrevious}
         />
         <div className="mx-auto flex min-w-0 items-center gap-1.5">
@@ -762,8 +790,8 @@ function ReviewToolbar({
             onToggle={onChapterCompletedToggle}
             title={
               chapterCompleted
-                ? 'Mark current chapter as not reviewed'
-                : 'Mark current chapter as reviewed'
+                ? t('Mark current chapter as not reviewed')
+                : t('Mark current chapter as reviewed')
             }
             variant="icon"
           />
@@ -777,7 +805,7 @@ function ReviewToolbar({
         <IconButton
           disabled={!hasNextChapter}
           icon={ArrowRight01Icon}
-          label="Next chapter"
+          label={t('Next chapter')}
           onClick={onNext}
         />
       </div>
@@ -796,23 +824,26 @@ function ChapterPicker({
   onChapterSelect: (chapter: ReviewChapter) => void;
   tour: ReviewTour;
 }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
 
   return (
     <Popover onOpenChange={(nextOpen: boolean) => setOpen(nextOpen)} open={open}>
       <PopoverTrigger
-        aria-label="Select chapter"
+        aria-label={t('Select chapter')}
         render={
           <button
             className={`focus-ring pressable hit-area-40 inline-flex min-h-8 min-w-0 max-w-full items-center gap-1.5 rounded-[8px] px-2 text-sm font-medium text-fg transition-[background-color,color,scale] ${
               open ? 'bg-hover' : 'hover:bg-hover'
             }`}
-            title="Select chapter"
+            title={t('Select chapter')}
             type="button"
           />
         }
       >
-        <span className="mono-tabular truncate">Chapter {activeChapter.index}</span>
+        <span className="mono-tabular truncate">
+          {t('Chapter {index}', { index: activeChapter.index })}
+        </span>
         <AppIcon
           className={`shrink-0 text-fg-muted transition-transform duration-150 [transition-timing-function:var(--ease-polished)] ${
             open ? 'rotate-180' : 'rotate-0'
@@ -858,6 +889,7 @@ function ChapterPickerItem({
   onSelect: () => void;
   stats: ReturnType<typeof getChapterStats>;
 }) {
+  const { t } = useI18n();
   return (
     <button
       aria-current={active ? 'true' : undefined}
@@ -880,7 +912,7 @@ function ChapterPickerItem({
           <RiskBadge risk={chapter.risk} />
           <span className="font-semibold text-add">+{stats.additions}</span>
           <span className="font-semibold text-delete">-{stats.deletions}</span>
-          <span className="text-fg-muted">{stats.files} files</span>
+          <span className="text-fg-muted">{t('{count} files', { count: stats.files })}</span>
         </span>
       </span>
     </button>
@@ -894,6 +926,7 @@ function DisplaySettingsButton({
   onSettingsChange: (settings: DiffDisplaySettings) => void;
   settings: DiffDisplaySettings;
 }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
 
   const updateSetting = <Key extends keyof DiffDisplaySettings>(
@@ -906,13 +939,13 @@ function DisplaySettingsButton({
   return (
     <Popover onOpenChange={(nextOpen: boolean) => setOpen(nextOpen)} open={open}>
       <PopoverTrigger
-        aria-label="Display settings"
+        aria-label={t('Display settings')}
         render={
           <button
             className={`focus-ring pressable button-raised hit-area-40 grid size-9 shrink-0 place-items-center rounded-[8px] ${
               open ? 'bg-hover text-fg' : 'bg-control text-fg-muted hover:bg-hover hover:text-fg'
             }`}
-            title="Display settings"
+            title={t('Display settings')}
             type="button"
           />
         }
@@ -925,25 +958,28 @@ function DisplaySettingsButton({
         sideOffset={4}
       >
         <div className="grid gap-2">
-          <SettingControlRow label="Theme">
+          <SettingControlRow label={t('Language')}>
+            <LanguageControl />
+          </SettingControlRow>
+          <SettingControlRow label={t('Theme')}>
             <ThemeModeControl />
           </SettingControlRow>
           <div className="-mx-3 h-px bg-line" />
           <SettingSelect
-            label="Syntax theme"
+            label={t('Syntax theme')}
             onChange={(value) =>
               updateSetting('syntaxTheme', value as DiffDisplaySettings['syntaxTheme'])
             }
             options={[
-              ['auto', 'Auto'],
+              ['auto', t('Auto')],
               ['github-light', 'GitHub Light'],
               ['github-dark', 'GitHub Dark'],
-              ['plain', 'Plain'],
+              ['plain', t('Plain')],
             ]}
             value={settings.syntaxTheme}
           />
           <SettingSelect
-            label="Font"
+            label={t('Font')}
             onChange={(value) =>
               updateSetting('fontFamily', value as DiffDisplaySettings['fontFamily'])
             }
@@ -954,7 +990,7 @@ function DisplaySettingsButton({
             value={settings.fontFamily}
           />
           <SettingSelect
-            label="Font size"
+            label={t('Font size')}
             onChange={(value) =>
               updateSetting('fontSize', Number(value) as DiffDisplaySettings['fontSize'])
             }
@@ -966,68 +1002,68 @@ function DisplaySettingsButton({
             value={String(settings.fontSize)}
           />
           <SettingSelect
-            label="Line height"
+            label={t('Line height')}
             onChange={(value) =>
               updateSetting('lineHeight', value as DiffDisplaySettings['lineHeight'])
             }
             options={[
-              ['compact', 'Compact'],
-              ['normal', 'Normal'],
-              ['relaxed', 'Relaxed'],
+              ['compact', t('Compact')],
+              ['normal', t('Normal')],
+              ['relaxed', t('Relaxed')],
             ]}
             value={settings.lineHeight}
           />
           <div className="-mx-3 h-px bg-line" />
           <SettingSelect
-            label="Layout"
+            label={t('Layout')}
             onChange={(value) => updateSetting('layout', value as DiffDisplaySettings['layout'])}
             options={[
-              ['split', 'Split'],
-              ['unified', 'Unified'],
+              ['split', t('Split')],
+              ['unified', t('Unified')],
             ]}
             value={settings.layout}
           />
           <SettingSelect
-            label="Indicators"
+            label={t('Indicators')}
             onChange={(value) =>
               updateSetting('indicators', value as DiffDisplaySettings['indicators'])
             }
             options={[
-              ['classic', 'Classic (+/-)'],
-              ['none', 'None'],
+              ['classic', t('Classic (+/-)')],
+              ['none', t('None')],
             ]}
             value={settings.indicators}
           />
           <SettingSelect
-            label="Inline diffs"
+            label={t('Inline diffs')}
             onChange={(value) =>
               updateSetting('inlineDiffs', value as DiffDisplaySettings['inlineDiffs'])
             }
             options={[
-              ['word', 'Word'],
-              ['none', 'None'],
+              ['word', t('Word')],
+              ['none', t('None')],
             ]}
             value={settings.inlineDiffs}
           />
           <div className="-mx-3 h-px bg-line" />
           <SettingSwitch
             checked={settings.ligatures}
-            label="Ligatures"
+            label={t('Ligatures')}
             onChange={(checked) => updateSetting('ligatures', checked)}
           />
           <SettingSwitch
             checked={settings.backgrounds}
-            label="Backgrounds"
+            label={t('Backgrounds')}
             onChange={(checked) => updateSetting('backgrounds', checked)}
           />
           <SettingSwitch
             checked={settings.wrapping}
-            label="Wrapping"
+            label={t('Wrapping')}
             onChange={(checked) => updateSetting('wrapping', checked)}
           />
           <SettingSwitch
             checked={settings.lineNumbers}
-            label="Line numbers"
+            label={t('Line numbers')}
             onChange={(checked) => updateSetting('lineNumbers', checked)}
           />
         </div>
@@ -1120,19 +1156,20 @@ function ReviewCommentsView({
   onCommentDelete: (commentId: string) => void;
   onCommentUpdate: (commentId: string, body: string) => void;
 }) {
+  const { t } = useI18n();
   return (
     <div className="mx-auto grid w-full max-w-4xl gap-4 py-7 max-lg:py-6">
       <div className="flex min-h-9 items-start justify-between gap-4">
         <div className="min-w-0">
           <h2 className="text-lg font-semibold leading-6 tracking-tight text-fg">
-            Review comments
+            {t('Review comments')}
           </h2>
           <p className="mt-1 text-sm leading-[1.45] text-fg-muted">
-            All comments added while reviewing this tour.
+            {t('All comments added while reviewing this tour.')}
           </p>
         </div>
         <span className="mono-tabular shrink-0 pt-0.5 text-xs text-fg-muted">
-          {comments.length} total
+          {t('{count} total', { count: comments.length })}
         </span>
       </div>
       <ReviewCommentsPanel
@@ -1153,6 +1190,7 @@ function ReviewCommentsPanel({
   onCommentDelete: (commentId: string) => void;
   onCommentUpdate: (commentId: string, body: string) => void;
 }) {
+  const { t } = useI18n();
   return (
     <div className="surface-panel rounded-[8px] bg-panel p-4">
       {comments.length ? (
@@ -1168,7 +1206,7 @@ function ReviewCommentsPanel({
         </ul>
       ) : (
         <p className="text-sm leading-[1.45] text-fg-muted">
-          Hover a code line and drag the + button to add a comment.
+          {t('Hover a code line and drag the + button to add a comment.')}
         </p>
       )}
     </div>
@@ -1184,6 +1222,7 @@ function ReviewCommentListItem({
   onCommentDelete: (commentId: string) => void;
   onCommentUpdate: (commentId: string, body: string) => void;
 }) {
+  const { locale, t } = useI18n();
   const [editing, setEditing] = useState(false);
   const [draftBody, setDraftBody] = useState(comment.body);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -1233,7 +1272,7 @@ function ReviewCommentListItem({
           {editing ? (
             <div className="mt-2 grid gap-2">
               <textarea
-                aria-label="Edit review comment"
+                aria-label={t('Edit review comment')}
                 className="min-h-24 w-full resize-y rounded-[7px] bg-diff-line px-3 py-2 text-sm leading-[1.45] text-fg shadow-control outline-none transition-[box-shadow] duration-150 [transition-timing-function:var(--ease-polished)] placeholder:text-fg-faint focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
                 onChange={(event) => setDraftBody(event.target.value)}
                 onKeyDown={(event) => {
@@ -1253,11 +1292,11 @@ function ReviewCommentListItem({
               <div className="flex justify-end gap-1.5">
                 <Button onClick={cancelEdit} size="xs" variant="ghost">
                   <AppIcon icon={Cancel01Icon} size={14} />
-                  Cancel
+                  {t('Cancel')}
                 </Button>
                 <Button disabled={saveDisabled} onClick={saveEdit} size="xs" variant="success">
                   <AppIcon icon={SaveIcon} size={14} />
-                  Save
+                  {t('Save')}
                 </Button>
               </div>
             </div>
@@ -1269,22 +1308,22 @@ function ReviewCommentListItem({
         </div>
         <div className="flex items-center gap-1">
           <button
-            aria-label="Edit review comment"
+            aria-label={t('Edit review comment')}
             aria-pressed={editing}
             className={`focus-ring hit-area-40 grid size-7 place-items-center rounded-[7px] transition-[background-color,color,scale] duration-150 [transition-timing-function:var(--ease-polished)] hover:bg-hover hover:text-fg active:scale-[0.96] ${
               editing ? 'bg-hover text-fg' : 'text-fg-faint'
             }`}
             onClick={() => setEditing((current) => !current)}
-            title="Edit comment"
+            title={t('Edit comment')}
             type="button"
           >
             <AppIcon icon={PencilEdit02Icon} size={14} />
           </button>
           <button
-            aria-label="Delete review comment"
+            aria-label={t('Delete review comment')}
             className="focus-ring hit-area-40 grid size-7 place-items-center rounded-[7px] text-fg-faint transition-[background-color,color,scale] duration-150 [transition-timing-function:var(--ease-polished)] hover:bg-hover hover:text-error active:scale-[0.96]"
             onClick={() => onCommentDelete(comment.id)}
-            title="Delete comment"
+            title={t('Delete comment')}
             type="button"
           >
             <AppIcon icon={Delete02Icon} size={14} />
@@ -1292,7 +1331,7 @@ function ReviewCommentListItem({
         </div>
       </div>
       <code className="truncate rounded-[5px] bg-diff-line px-2 py-1 font-mono text-[11px] leading-4 text-code shadow-control">
-        {getReviewCommentSnippet(comment.range)}
+        {getReviewCommentSnippet(comment.range, locale)}
       </code>
     </li>
   );
@@ -1309,8 +1348,9 @@ function FileList({
   treeKey: string;
   viewedFileIds: ReadonlySet<string>;
 }) {
+  const { t } = useI18n();
   if (files.length === 0) {
-    return <p className="mt-4 text-sm text-fg-muted">No files match.</p>;
+    return <p className="mt-4 text-sm text-fg-muted">{t('No files match.')}</p>;
   }
 
   return (
@@ -1332,6 +1372,7 @@ function FileTreeList({
   onFileSelect: (path: string) => void;
   viewedFileIds: ReadonlySet<string>;
 }) {
+  const { t } = useI18n();
   const statsByPath = useMemo(() => {
     const next = new Map<string, ReturnType<typeof getFileStats>>();
     for (const file of files) {
@@ -1401,7 +1442,10 @@ function FileTreeList({
       const prefix = file && viewedFileIds.has(file.id) ? '✓ ' : '';
       return {
         text: `${prefix}+${stats.additions} -${stats.deletions}`,
-        title: `${stats.additions} additions, ${stats.deletions} deletions`,
+        title: t('{additions} additions, {deletions} deletions', {
+          additions: stats.additions,
+          deletions: stats.deletions,
+        }),
       };
     },
     unsafeCSS: fileTreeCss,
@@ -1409,7 +1453,7 @@ function FileTreeList({
 
   return (
     <PierreFileTree
-      aria-label="Changed files"
+      aria-label={t('Changed files')}
       className="block min-h-0 bg-panel"
       model={model}
       style={treeStyle}

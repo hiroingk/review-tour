@@ -39,10 +39,15 @@ body {
     font-weight: 500;
     letter-spacing: -0.022em;
     color: var(--color-lp-fg);
+    text-wrap: balance;
   }
 
   .lp-heading-muted {
     color: var(--color-lp-fg-secondary);
+  }
+
+  .lp-copy {
+    text-wrap: pretty;
   }
 
   .lp-pill {
@@ -209,5 +214,135 @@ body {
   .lp-terminal-bullet,
   .lp-terminal-success {
     animation: none;
+  }
+}
+
+.lp-code-jump-tracer {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--color-lp-accent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--color-lp-accent) 65%, transparent);
+  animation: lp-code-jump-trace 480ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+@keyframes lp-code-jump-trace {
+  from {
+    opacity: 0;
+    translate: -50% -2px;
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 1;
+    translate: -50% 30px;
+  }
+}
+
+.lp-code-jump-target-active {
+  animation: lp-code-jump-target 1.2s var(--ease-polished) both;
+}
+
+@keyframes lp-code-jump-target {
+  0%,
+  55% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--color-lp-accent) 45%, transparent),
+      inset 0 0 0 999px color-mix(in srgb, var(--color-lp-accent) 12%, transparent);
+  }
+
+  100% {
+    box-shadow:
+      0 0 0 1px oklch(100% 0 0 / 7%),
+      inset 0 0 0 999px transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-code-jump-tracer {
+    animation: none;
+    translate: -50% 30px;
+  }
+
+  .lp-code-jump-target-active {
+    animation: none;
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--color-lp-accent) 45%, transparent),
+      inset 0 0 0 999px color-mix(in srgb, var(--color-lp-accent) 12%, transparent);
+  }
+}
+
+html:lang(ja) body {
+  line-break: strict;
+}
+
+html:lang(ja) .lp-heading,
+html:lang(ja) .lp-copy {
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+@supports (word-break: auto-phrase) {
+  html:lang(ja) .lp-heading,
+  html:lang(ja) .lp-copy {
+    word-break: auto-phrase;
+  }
+}
+
+html:lang(ja) .lp-heading {
+  letter-spacing: -0.01em;
+}
+
+html:lang(ja) .lp-heading-muted {
+  font-weight: 400;
+}
+
+html:lang(ja) .lp-heading-lead {
+  display: block;
+  margin-bottom: 0.18em;
+}
+
+html:lang(ja) .lp-heading-hero {
+  max-width: 18em;
+  font-size: 30px;
+  line-height: 1.32;
+}
+
+html:lang(ja) .lp-heading-feature {
+  font-size: 21px;
+  line-height: 1.45;
+}
+
+html:lang(ja) .lp-heading-statement {
+  font-size: 27px;
+  line-height: 1.4;
+}
+
+html:lang(ja) .lp-heading-cta {
+  font-size: 30px;
+  line-height: 1.35;
+}
+
+@media (min-width: 768px) {
+  html:lang(ja) .lp-heading-hero {
+    font-size: 42px;
+  }
+
+  html:lang(ja) .lp-heading-feature {
+    font-size: 25px;
+  }
+
+  html:lang(ja) .lp-heading-statement {
+    font-size: 36px;
+  }
+
+  html:lang(ja) .lp-heading-cta {
+    font-size: 44px;
   }
 }

@@ -76,4 +76,9 @@ test('formats review comments as a Codex-ready prompt', () => {
   expect(prompt).toContain('Please extract this into a helper');
   expect(prompt).toContain('+const sql = buildUpdateSet(table);');
   expect(prompt).toContain('+return sql;');
+
+  const japanesePrompt = formatReviewCommentsForCodex([comment], 'ja');
+  expect(japanesePrompt).toContain('以下のレビューコメントに対応してください');
+  expect(japanesePrompt).toContain('コメント:');
+  expect(japanesePrompt).toContain('選択されたコード:');
 });

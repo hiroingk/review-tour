@@ -30,6 +30,7 @@ import {
 import type { DiffDisplaySettings } from './diffSettings';
 import { fileDomId } from './dom';
 import { getCollapsedFileScrollTop } from './collapseScroll';
+import { useI18n } from './i18n';
 import {
   createReviewComment,
   getReviewCommentLineKey,
@@ -138,10 +139,11 @@ export function DiffViewer({
   settings: DiffDisplaySettings;
   viewedFileIds: ReadonlySet<string>;
 }) {
+  const { t } = useI18n();
   if (files.length === 0) {
     return (
       <p className="surface rounded-[8px] bg-panel px-5 py-4 text-sm text-fg-muted">
-        No diff hunks for this chapter.
+        {t('No diff hunks for this chapter.')}
       </p>
     );
   }
@@ -195,6 +197,7 @@ function FileDiff({
   settings: DiffDisplaySettings;
   viewed: boolean;
 }) {
+  const { t } = useI18n();
   const fileRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLElement>(null);
   const syntaxTheme = useResolvedSyntaxTheme(settings.syntaxTheme);
@@ -496,9 +499,9 @@ function FileDiff({
           }`}
         >
           <FileHeaderIconAction
-            ariaLabel={collapsed ? 'Expand file' : 'Collapse file'}
+            ariaLabel={collapsed ? t('Expand file') : t('Collapse file')}
             onClick={toggleCollapsed}
-            title={collapsed ? 'Expand file' : 'Collapse file'}
+            title={collapsed ? t('Expand file') : t('Collapse file')}
           >
             <AppIcon
               className={`transition-transform duration-150 [transition-timing-function:var(--ease-polished)] ${
@@ -510,12 +513,12 @@ function FileDiff({
           <span className="truncate pr-3">{file.path}</span>
           <div className="flex min-w-0 items-center justify-end gap-1">
             <FileHeaderIconAction
-              ariaLabel="Expand full file"
+              ariaLabel={t('Expand full file')}
               className="opacity-0 scale-[0.96] transition-[opacity,scale,color] duration-150 [transition-timing-function:var(--ease-polished)] group-hover/file-header:opacity-100 group-hover/file-header:scale-100 group-focus-within/file-header:opacity-100 group-focus-within/file-header:scale-100 disabled:pointer-events-none disabled:opacity-0"
               disabled={foldIds.length === 0}
               display="icon"
               onClick={expandFullFile}
-              title="Expand full file"
+              title={t('Expand full file')}
             >
               <AppIcon icon={SquareArrowVerticalIcon} />
             </FileHeaderIconAction>
@@ -527,7 +530,7 @@ function FileDiff({
           <FileViewedToggle
             completed={viewed}
             onToggle={toggleViewed}
-            title={viewed ? 'Mark file as not viewed' : 'Mark file as viewed'}
+            title={viewed ? t('Mark file as not viewed') : t('Mark file as viewed')}
           />
         </div>
       </header>
@@ -1269,6 +1272,7 @@ function CommentGutter({
   ) => void;
   selected: boolean;
 }) {
+  const { t } = useI18n();
   const commented = commentCount > 0;
   const visibleClass = selected
     ? 'pointer-events-none scale-[0.25] opacity-0'
@@ -1287,13 +1291,16 @@ function CommentGutter({
       ) : null}
       {lineRef ? (
         <button
-          aria-label={`Add comment on ${lineRef.filePath} line ${lineRef.lineNumber}`}
+          aria-label={t('Add comment on {path} line {line}', {
+            line: lineRef.lineNumber,
+            path: lineRef.filePath,
+          })}
           className={[
             'button-raised focus-ring pressable pointer-events-auto absolute left-1 top-1/2 -mt-2.5 grid size-5 place-items-center rounded-[7px] transition-[background-color,box-shadow,color,opacity,scale,translate] duration-150 [transition-timing-function:var(--ease-polished)]',
             visibleClass,
           ].join(' ')}
           onPointerDown={(event) => onLineSelectionStart(lineRef, event)}
-          title="Add comment"
+          title={t('Add comment')}
           type="button"
         >
           <AppIcon icon={PlusSignIcon} size={12} />
@@ -1361,6 +1368,7 @@ function InlineCommentCard({
   onEditingChange: (editing: boolean) => void;
   onUpdate: (body: string) => void;
 }) {
+  const { t } = useI18n();
   const [draftBody, setDraftBody] = useState(comment.body);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const trimmedDraftBody = draftBody.trim();
@@ -1401,29 +1409,29 @@ function InlineCommentCard({
       <header className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
         <div className="flex min-w-0 items-center gap-2 text-[11px] leading-4 text-fg-muted">
           <AppIcon className="shrink-0 text-add" icon={Comment01Icon} size={14} />
-          <span className="font-medium text-fg-secondary">Review comment</span>
+          <span className="font-medium text-fg-secondary">{t('Review comment')}</span>
           <span className="mono-tabular min-w-0 truncate">
             {getReviewCommentLineLabel(comment.range)}
           </span>
         </div>
         <div className="flex items-center gap-1">
           <button
-            aria-label="Edit review comment"
+            aria-label={t('Edit review comment')}
             aria-pressed={editing}
             className={`focus-ring hit-area-40 grid size-7 place-items-center rounded-[7px] transition-[background-color,color,scale] duration-150 [transition-timing-function:var(--ease-polished)] hover:bg-hover hover:text-fg active:scale-[0.96] ${
               editing ? 'bg-hover text-fg' : 'text-fg-faint'
             }`}
             onClick={() => onEditingChange(!editing)}
-            title="Edit comment"
+            title={t('Edit comment')}
             type="button"
           >
             <AppIcon icon={PencilEdit02Icon} size={14} />
           </button>
           <button
-            aria-label="Delete review comment"
+            aria-label={t('Delete review comment')}
             className="focus-ring hit-area-40 grid size-7 place-items-center rounded-[7px] text-fg-faint transition-[background-color,color,scale] duration-150 [transition-timing-function:var(--ease-polished)] hover:bg-hover hover:text-error active:scale-[0.96]"
             onClick={onDelete}
-            title="Delete comment"
+            title={t('Delete comment')}
             type="button"
           >
             <AppIcon icon={Delete02Icon} size={14} />
@@ -1433,7 +1441,7 @@ function InlineCommentCard({
       {editing ? (
         <div className="mt-2 grid min-h-0 grid-rows-[minmax(0,1fr)_auto] gap-2">
           <textarea
-            aria-label="Edit review comment"
+            aria-label={t('Edit review comment')}
             className="min-h-0 resize-none rounded-[6px] bg-control px-2.5 py-2 text-sm leading-[1.4] text-fg shadow-control outline-none transition-[box-shadow] duration-150 [transition-timing-function:var(--ease-polished)] placeholder:text-fg-faint focus:shadow-[var(--shadow-focus)]"
             onChange={(event) => setDraftBody(event.target.value)}
             onKeyDown={(event) => {
@@ -1452,11 +1460,11 @@ function InlineCommentCard({
           <div className="flex justify-end gap-1.5">
             <Button onClick={cancelEdit} size="xs" variant="ghost">
               <AppIcon icon={Cancel02Icon} />
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button disabled={saveDisabled} onClick={saveEdit} size="xs" variant="success">
               <AppIcon icon={SaveIcon} />
-              Save
+              {t('Save')}
             </Button>
           </div>
         </div>
@@ -1494,6 +1502,7 @@ function DraftCommentRow({
   range: ReviewCommentRange;
   value: string;
 }) {
+  const { t } = useI18n();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const canSave = value.trim().length > 0;
 
@@ -1521,7 +1530,7 @@ function DraftCommentRow({
           <span className="shrink-0 text-fg-faint">{getReviewCommentLineLabel(range)}</span>
         </div>
         <textarea
-          aria-label="Review comment"
+          aria-label={t('Review comment')}
           className="min-h-0 resize-none rounded-[6px] bg-control px-2.5 py-2 text-sm leading-[1.4] text-fg shadow-control outline-none transition-[box-shadow] duration-150 [transition-timing-function:var(--ease-polished)] placeholder:text-fg-faint focus:shadow-[var(--shadow-focus)]"
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={(event) => {
@@ -1534,18 +1543,18 @@ function DraftCommentRow({
               onCancel();
             }
           }}
-          placeholder="Leave a review comment..."
+          placeholder={t('Leave a review comment...')}
           ref={textareaRef}
           value={value}
         />
         <div className="mt-2 flex justify-end gap-2">
           <Button onClick={onCancel} size="xs" variant="ghost">
             <AppIcon icon={Cancel02Icon} />
-            Cancel
+            {t('Cancel')}
           </Button>
           <Button disabled={!canSave} size="xs" type="submit">
             <AppIcon icon={Sent02Icon} />
-            Add comment
+            {t('Add comment')}
           </Button>
         </div>
       </form>
@@ -1652,6 +1661,7 @@ function SyntaxTokenContent({
 }
 
 function SymbolText({ text }: { text: string }) {
+  const { t } = useI18n();
   const navigation = useSymbolNavigation();
   if (!navigation || !text) return text;
 
@@ -1672,7 +1682,7 @@ function SymbolText({ text }: { text: string }) {
           event.stopPropagation();
           navigation.openSymbol(segment.text, { x: event.clientX, y: event.clientY });
         }}
-        title="Go to definition"
+        title={t('Go to definition')}
       >
         {segment.text}
       </span>

@@ -22,6 +22,7 @@ import {
   CommandShortcut,
 } from '#/components/ui/command';
 import type { ChapterStats } from '../reviewModel';
+import { LanguageControl, type Translator, useI18n } from './i18n';
 import { ThemeModeControl } from './theme';
 
 export type CommandPaletteTarget =
@@ -56,7 +57,10 @@ export function ShellMessage({
 }) {
   return (
     <main className="relative grid min-h-screen place-items-center bg-canvas px-6 text-fg">
-      <ThemeModeControl className="absolute right-4 top-4" />
+      <div className="absolute right-4 top-4 flex items-center gap-2">
+        <LanguageControl />
+        <ThemeModeControl />
+      </div>
       <p
         className={
           tone === 'error'
@@ -83,7 +87,8 @@ export function CommandPalette({
   tour: ReviewTour;
 }) {
   const [query, setQuery] = useState('');
-  const groups = useMemo(() => getCommandPaletteGroups(tour), [tour]);
+  const { t } = useI18n();
+  const groups = useMemo(() => getCommandPaletteGroups(tour, t), [t, tour]);
 
   useEffect(() => {
     if (open) setQuery('');
@@ -92,18 +97,18 @@ export function CommandPalette({
   return (
     <CommandDialog onOpenChange={onOpenChange} open={open}>
       <CommandDialogPopup
-        aria-label="Search chapters, files, and questions"
+        aria-label={t('Search chapters, files, and questions')}
         className="max-w-[40rem]"
       >
         <Command
-          itemToStringValue={getCommandPaletteValue}
+          itemToStringValue={(item) => getCommandPaletteValue(item, t)}
           items={groups}
           onValueChange={setQuery}
           value={query}
         >
-          <CommandInput placeholder="Search chapters, files, questions..." type="search" />
+          <CommandInput placeholder={t('Search chapters, files, questions...')} type="search" />
           <CommandPanel>
-            <CommandEmpty>No results.</CommandEmpty>
+            <CommandEmpty>{t('No results.')}</CommandEmpty>
             <CommandList className="max-h-[52vh]">
               {(group: CommandPaletteGroup) => (
                 <Fragment key={group.value}>
@@ -126,7 +131,7 @@ export function CommandPalette({
                             </span>
                           </span>
                           <CommandShortcut className="tracking-normal">
-                            {getCommandPaletteKindLabel(result.target)}
+                            {getCommandPaletteKindLabel(result.target, t)}
                           </CommandShortcut>
                         </CommandItem>
                       )}
@@ -139,10 +144,10 @@ export function CommandPalette({
           </CommandPanel>
           <CommandFooter>
             <div className="flex items-center gap-4">
-              <CommandPaletteFooterHint keys={['Up', 'Down']} label="Navigate" />
-              <CommandPaletteFooterHint keys={['Enter']} label="Open" />
+              <CommandPaletteFooterHint keys={['↑', '↓']} label={t('Navigate')} />
+              <CommandPaletteFooterHint keys={['Enter']} label={t('Open')} />
             </div>
-            <CommandPaletteFooterHint keys={['Esc']} label="Close" />
+            <CommandPaletteFooterHint keys={['Esc']} label={t('Close')} />
           </CommandFooter>
         </Command>
       </CommandDialogPopup>
@@ -172,7 +177,7 @@ export function PanelHeading({
   );
 }
 
-function getCommandPaletteGroups(tour: ReviewTour): CommandPaletteGroup[] {
+function getCommandPaletteGroups(tour: ReviewTour, t: Translator): CommandPaletteGroup[] {
   const chapters: CommandPaletteResult[] = [];
   const questions: CommandPaletteResult[] = [];
   const files: CommandPaletteResult[] = [];
@@ -181,7 +186,7 @@ function getCommandPaletteGroups(tour: ReviewTour): CommandPaletteGroup[] {
     chapters.push({
       id: `chapter:${chapter.id}`,
       label: chapter.title,
-      meta: `Chapter ${chapter.index}`,
+      meta: t('Chapter {index}', { index: chapter.index }),
       target: { type: 'chapter', chapterId: chapter.id },
     });
 
@@ -189,7 +194,7 @@ function getCommandPaletteGroups(tour: ReviewTour): CommandPaletteGroup[] {
       questions.push({
         id: `question:${chapter.id}:${index}`,
         label: question,
-        meta: `Question · Chapter ${chapter.index}`,
+        meta: t('Question · Chapter {index}', { index: chapter.index }),
         target: { type: 'question', chapterId: chapter.id, questionIndex: index },
       });
     });
@@ -199,35 +204,38 @@ function getCommandPaletteGroups(tour: ReviewTour): CommandPaletteGroup[] {
     files.push({
       id: `file:${file.id}`,
       label: file.path,
-      meta: `${file.additions} additions, ${file.deletions} deletions`,
+      meta: t('{additions} additions, {deletions} deletions', {
+        additions: file.additions,
+        deletions: file.deletions,
+      }),
       target: { type: 'file', path: file.path },
     });
   }
 
   return [
-    { value: 'chapters', label: 'Chapters', items: chapters },
-    { value: 'files', label: 'Files', items: files },
-    { value: 'questions', label: 'Review questions', items: questions },
+    { value: 'chapters', label: t('Chapters'), items: chapters },
+    { value: 'files', label: t('Files'), items: files },
+    { value: 'questions', label: t('Review questions'), items: questions },
   ].filter((group) => group.items.length > 0);
 }
 
-function getCommandPaletteKindLabel(target: CommandPaletteTarget) {
-  if (target.type === 'chapter') return 'Chapter';
-  if (target.type === 'question') return 'Question';
-  return 'File';
+function getCommandPaletteKindLabel(target: CommandPaletteTarget, t: Translator) {
+  if (target.type === 'chapter') return t('Chapter');
+  if (target.type === 'question') return t('Question');
+  return t('File');
 }
 
-function getCommandPaletteValue(item: unknown) {
+function getCommandPaletteValue(item: unknown, t: Translator) {
   if (isCommandPaletteGroup(item)) {
-    return `${item.label} ${item.items.map(getCommandPaletteResultValue).join(' ')}`;
+    return `${item.label} ${item.items.map((result) => getCommandPaletteResultValue(result, t)).join(' ')}`;
   }
 
-  return getCommandPaletteResultValue(item);
+  return getCommandPaletteResultValue(item, t);
 }
 
-function getCommandPaletteResultValue(result: unknown) {
+function getCommandPaletteResultValue(result: unknown, t: Translator) {
   const commandResult = result as CommandPaletteResult;
-  return `${getCommandPaletteKindLabel(commandResult.target)} ${commandResult.label} ${commandResult.meta}`;
+  return `${getCommandPaletteKindLabel(commandResult.target, t)} ${commandResult.label} ${commandResult.meta}`;
 }
 
 function isCommandPaletteGroup(item: unknown): item is CommandPaletteGroup {
@@ -508,7 +516,9 @@ export function RiskBadge({
   risk: ReviewChapter['risk'];
   size?: BadgeProps['size'];
 }) {
-  const label = risk === 'high' ? 'High risk' : risk === 'medium' ? 'Medium risk' : 'Low risk';
+  const { t } = useI18n();
+  const label =
+    risk === 'high' ? t('High risk') : risk === 'medium' ? t('Medium risk') : t('Low risk');
   const variant = risk === 'high' ? 'error' : risk === 'medium' ? 'warning' : 'success';
 
   return (

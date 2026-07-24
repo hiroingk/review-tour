@@ -1,6 +1,7 @@
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import { ToastProvider } from '#/components/ui/toast';
+import { LocaleProvider } from '../client/i18n';
 import { THEME_INIT_SCRIPT } from '../client/themeInit';
 import appCss from '../styles.css?url';
 
@@ -24,7 +25,9 @@ function RootDocument({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <ToastProvider>{children}</ToastProvider>
+        <LocaleProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </LocaleProvider>
         <Scripts />
       </body>
     </html>
