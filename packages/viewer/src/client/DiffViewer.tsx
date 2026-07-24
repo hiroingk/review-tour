@@ -480,7 +480,9 @@ function FileDiff({
 
   return (
     <article
-      className="mb-7 overflow-visible rounded-[8px] bg-panel [content-visibility:auto] [contain-intrinsic-size:0_520px] max-sm:min-w-[760px]"
+      className={`mb-7 overflow-visible rounded-[8px] bg-panel [content-visibility:auto] [contain-intrinsic-size:0_520px] ${
+        settings.layout === 'split' ? 'max-sm:min-w-[760px]' : ''
+      }`}
       ref={fileRef}
     >
       <header
