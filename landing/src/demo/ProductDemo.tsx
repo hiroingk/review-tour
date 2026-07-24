@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReviewChapter } from 'review-tour/schema';
 import {
   addStringSetValues,
@@ -10,11 +10,10 @@ import { defaultDiffDisplaySettings, type DiffDisplaySettings } from '#/client/d
 import type { ReviewComment } from '#/client/reviewComments';
 import { ReviewWorkspace } from '#/client/ReviewWorkspace';
 import { ToastProvider } from '#/components/ui/toast';
-import { demoTour } from './demoTour';
+import { useLandingI18n } from '../i18n';
+import { getDemoTour } from './demoTour';
 
 const CHAPTER_DURATION_MS = 9000;
-
-const chapters = demoTour.tour.chapters;
 
 function usePrefersReducedMotion() {
   const [reduced, setReduced] = useState(false);
@@ -53,6 +52,9 @@ function useInView(ref: React.RefObject<HTMLElement | null>) {
 }
 
 export function ProductDemo() {
+  const { locale } = useLandingI18n();
+  const demoTour = useMemo(() => getDemoTour(locale), [locale]);
+  const chapters = demoTour.tour.chapters;
   const containerRef = useRef<HTMLDivElement>(null);
   const inView = useInView(containerRef);
   const reducedMotion = usePrefersReducedMotion();
@@ -183,17 +185,24 @@ type TerminalStep = {
 
 const COMMAND_TEXT = '/review-tour';
 
-const terminalSteps: TerminalStep[] = [
-  { id: 'collect', kind: 'tool', text: 'Reviewing the diff against main — 5 files (+75 −2)' },
-  { id: 'chapters', kind: 'tool', text: 'Writing chapters' },
-  { id: 'ch1', kind: 'sub', text: '1. Verify webhook signatures        high' },
-  { id: 'ch2', kind: 'sub', text: '2. Idempotent event processing      medium' },
-  { id: 'ch3', kind: 'sub', text: '3. Tests and configuration          low' },
-  { id: 'open', kind: 'tool', text: 'Opening the viewer' },
-  { id: 'ready', kind: 'success', text: 'Tour ready → http://localhost:4378' },
-];
-
 function DemoTerminal({ play, reducedMotion }: { play: boolean; reducedMotion: boolean }) {
+  const { t } = useLandingI18n();
+  const terminalSteps = useMemo<TerminalStep[]>(
+    () => [
+      {
+        id: 'collect',
+        kind: 'tool',
+        text: t('Reviewing the diff against main — 5 files (+75 −2)'),
+      },
+      { id: 'chapters', kind: 'tool', text: t('Writing chapters') },
+      { id: 'ch1', kind: 'sub', text: t('1. Verify webhook signatures        high') },
+      { id: 'ch2', kind: 'sub', text: t('2. Idempotent event processing      medium') },
+      { id: 'ch3', kind: 'sub', text: t('3. Tests and configuration          low') },
+      { id: 'open', kind: 'tool', text: t('Opening the viewer') },
+      { id: 'ready', kind: 'success', text: t('Tour ready → http://localhost:4378') },
+    ],
+    [t],
+  );
   const [typedChars, setTypedChars] = useState(0);
   const [revealedCount, setRevealedCount] = useState(0);
   const commandTyped = typedChars >= COMMAND_TEXT.length;
@@ -220,7 +229,7 @@ function DemoTerminal({ play, reducedMotion }: { play: boolean; reducedMotion: b
     const delay = revealedCount === 0 ? 420 : nextStep.kind === 'sub' ? 130 : 620;
     const id = window.setTimeout(() => setRevealedCount((count) => count + 1), delay);
     return () => window.clearTimeout(id);
-  }, [play, reducedMotion, typedChars, commandTyped, finished, revealedCount]);
+  }, [play, reducedMotion, typedChars, commandTyped, finished, revealedCount, terminalSteps]);
 
   return (
     <div className="pointer-events-none absolute -right-3 -bottom-8 hidden w-[380px] overflow-hidden rounded-lg bg-[oklch(12%_0.004_95)] shadow-[0_0_0_1px_oklch(100%_0_0_/_12%),0_16px_48px_-12px_rgb(0_0_0_/_80%)] lg:block">

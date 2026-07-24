@@ -1,11 +1,13 @@
 import { useState, type ReactNode } from 'react';
 import heroBg from './assets/hero-bg.jpg';
+import { LandingLanguageControl, useLandingI18n } from './i18n';
 
 export const GITHUB_URL = 'https://github.com/hiroingk/review-tour';
 const SKILL_COMMAND = 'npx skills add hiroingk/review-tour';
 const CLI_COMMAND = 'npm install -g review-tour';
 
 export function Nav() {
+  const { t } = useLandingI18n();
   return (
     <header className="sticky top-0 z-40 border-b border-lp-line bg-lp-canvas/85 backdrop-blur-md">
       <div className="lp-container flex h-16 items-center justify-between">
@@ -18,19 +20,19 @@ export function Nav() {
             className="text-sm text-lp-fg-secondary transition-colors hover:text-lp-fg"
             href="#features"
           >
-            Features
+            {t('Features')}
           </a>
           <a
             className="text-sm text-lp-fg-secondary transition-colors hover:text-lp-fg"
             href="#demo"
           >
-            Demo
+            {t('Demo')}
           </a>
           <a
             className="text-sm text-lp-fg-secondary transition-colors hover:text-lp-fg"
             href="#install"
           >
-            Install
+            {t('Install')}
           </a>
           <a
             className="text-sm text-lp-fg-secondary transition-colors hover:text-lp-fg"
@@ -42,16 +44,20 @@ export function Nav() {
           </a>
         </nav>
         <div className="flex items-center gap-3">
+          <LandingLanguageControl />
           <a
             className="lp-pill lp-pill-outline hidden !px-4 !py-2.5 text-[13px] sm:inline-flex"
             href={GITHUB_URL}
             rel="noreferrer"
             target="_blank"
           >
-            Star on GitHub
+            {t('Star on GitHub')}
           </a>
-          <a className="lp-pill lp-pill-primary !px-4 !py-2.5 text-[13px]" href="#install">
-            Install
+          <a
+            className="lp-pill lp-pill-primary shrink-0 whitespace-nowrap !px-4 !py-2.5 text-[13px]"
+            href="#install"
+          >
+            {t('Install')}
           </a>
         </div>
       </div>
@@ -74,15 +80,16 @@ function Logo() {
 }
 
 export function Hero({ demo }: { demo: ReactNode }) {
+  const { t } = useLandingI18n();
   return (
     <section className="lp-container pt-16 pb-10 md:pt-24" id="top">
-      <h1 className="lp-heading max-w-[24ch] text-[38px] leading-[1.14] md:text-[54px]">
-        Review Tour turns pull requests into stories you can actually review.
+      <h1 className="lp-heading lp-heading-hero max-w-[24ch] text-[38px] leading-[1.14] md:text-[54px]">
+        {t('Review Tour turns pull requests into stories you can actually review.')}
       </h1>
       <div className="mt-8 flex flex-col items-start gap-3">
         <SkillInstallCommand />
-        <p className="text-sm text-lp-fg-muted">
-          Free and open source. No sign-up — everything runs on your machine.
+        <p className="lp-copy text-sm text-lp-fg-muted">
+          {t('Free and open source. No sign-up — everything runs on your machine.')}
         </p>
       </div>
       <div className="mt-14 scroll-mt-24 md:mt-16" id="demo">
@@ -102,6 +109,7 @@ export function Hero({ demo }: { demo: ReactNode }) {
 }
 
 function SkillInstallCommand() {
+  const { t } = useLandingI18n();
   const [copied, setCopied] = useState(false);
 
   const copy = () => {
@@ -122,7 +130,7 @@ function SkillInstallCommand() {
         onClick={copy}
         type="button"
       >
-        {copied ? 'Copied' : 'Copy'}
+        {copied ? t('Copied') : t('Copy')}
       </button>
     </div>
   );
@@ -136,10 +144,11 @@ const surfaces = [
 ];
 
 export function SurfacesRow() {
+  const { t } = useLandingI18n();
   return (
     <section className="lp-container pt-20 pb-6 md:pt-28">
-      <p className="text-center text-sm text-lp-fg-secondary">
-        Runs where your agents already work
+      <p className="lp-copy text-center text-sm text-lp-fg-secondary">
+        {t('Runs where your agents already work')}
       </p>
       <div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4">
         {surfaces.map((surface) => (
@@ -177,8 +186,9 @@ export function FeaturePanel({
         }`}
       >
         <div>
-          <h2 className="lp-heading text-[26px] leading-[1.3] md:text-[30px]">
-            {heading} <span className="lp-heading-muted">{headingMuted}</span>
+          <h2 className="lp-heading lp-heading-feature text-[26px] leading-[1.3] md:text-[30px]">
+            <span className="lp-heading-lead">{heading}</span>{' '}
+            <span className="lp-heading-muted">{headingMuted}</span>
           </h2>
           {link ? (
             <a
@@ -199,15 +209,17 @@ export function FeaturePanel({
 }
 
 export function InstallPanel() {
+  const { t } = useLandingI18n();
   return (
     <div className="scroll-mt-24 rounded-2xl bg-lp-panel" id="install">
       <div className="grid items-center gap-10 p-6 md:grid-cols-2 md:gap-14 md:p-14">
         <div>
-          <h2 className="lp-heading text-[26px] leading-[1.3] md:text-[30px]">
-            Start with the skill.{' '}
+          <h2 className="lp-heading lp-heading-feature text-[26px] leading-[1.3] md:text-[30px]">
+            <span className="lp-heading-lead">{t('Start with the skill.')}</span>{' '}
             <span className="lp-heading-muted">
-              Add the agent skill from the GitHub source, then install the review-tour npm package
-              for the local viewer and manual commands.
+              {t(
+                'Add the agent skill from the GitHub source, then install the review-tour npm package for the local viewer and manual commands.',
+              )}
             </span>
           </h2>
           <a
@@ -216,20 +228,20 @@ export function InstallPanel() {
             rel="noreferrer"
             target="_blank"
           >
-            Read the quick start
+            {t('Read the quick start')}
             <ArrowRightIcon />
           </a>
         </div>
         <div className="flex min-w-0 flex-col gap-4">
           <CommandCard
             command={SKILL_COMMAND}
-            description="Then ask for /review-tour in Claude Code or $review-tour in Codex."
-            label="Agent skill"
+            description={t('Then ask for /review-tour in Claude Code or $review-tour in Codex.')}
+            label={t('Agent skill')}
           />
           <CommandCard
             command={CLI_COMMAND}
-            description="Provides the review-tour CLI used by the skill and manual commands."
-            label="npm package"
+            description={t('Provides the review-tour CLI used by the skill and manual commands.')}
+            label={t('npm package')}
           />
         </div>
       </div>
@@ -253,12 +265,13 @@ function CommandCard({
         <code className="min-w-0 font-mono text-[13px] break-all text-lp-fg">{command}</code>
         <CopyButton text={command} />
       </div>
-      <p className="mt-3 text-[13px] leading-relaxed text-lp-fg-secondary">{description}</p>
+      <p className="lp-copy mt-3 text-[13px] leading-relaxed text-lp-fg-secondary">{description}</p>
     </div>
   );
 }
 
 function CopyButton({ text }: { text: string }) {
+  const { t } = useLandingI18n();
   const [copied, setCopied] = useState(false);
 
   const copy = () => {
@@ -270,48 +283,49 @@ function CopyButton({ text }: { text: string }) {
 
   return (
     <button
-      aria-label={copied ? 'Copied' : 'Copy command'}
+      aria-label={copied ? t('Copied') : t('Copy command')}
       className="shrink-0 rounded-md px-2 py-1 text-xs text-lp-fg-secondary transition-colors hover:bg-lp-panel-strong hover:text-lp-fg"
       onClick={copy}
       type="button"
     >
-      {copied ? 'Copied' : 'Copy'}
+      {copied ? t('Copied') : t('Copy')}
     </button>
   );
 }
 
-const statementCards = [
-  {
-    title: 'Agents ship faster than you can read',
-    body:
-      'Parallel agents open five pull requests before lunch. The bottleneck has moved from ' +
-      'writing code to understanding it — and understanding does not parallelize.',
-  },
-  {
-    title: 'Free and open source',
-    body:
-      'Apache-2.0, with no paid tier and no seat licenses. Read the code, open an issue, or ' +
-      'send a pull request — ideally with a tour attached.',
-  },
-  {
-    title: 'No sign-up',
-    body:
-      'There is no account to create and no telemetry to opt out of. Install the skill or ' +
-      'the CLI and you are reviewing a minute later — in any editor, with any agent.',
-  },
-];
-
 export function Statement() {
+  const { t } = useLandingI18n();
+  const statementCards = [
+    {
+      title: t('Agents ship faster than you can read'),
+      body: t(
+        'Parallel agents open five pull requests before lunch. The bottleneck has moved from writing code to understanding it — and understanding does not parallelize.',
+      ),
+    },
+    {
+      title: t('Free and open source'),
+      body: t(
+        'Apache-2.0, with no paid tier and no seat licenses. Read the code, open an issue, or send a pull request — ideally with a tour attached.',
+      ),
+    },
+    {
+      title: t('No sign-up'),
+      body: t(
+        'There is no account to create and no telemetry to opt out of. Install the skill or the CLI and you are reviewing a minute later — in any editor, with any agent.',
+      ),
+    },
+  ];
+
   return (
     <section className="lp-container pt-24 pb-8 md:pt-32">
-      <h2 className="lp-heading text-center text-[34px] leading-tight md:text-[48px]">
-        Code review didn't scale. Now it has to.
+      <h2 className="lp-heading lp-heading-statement text-center text-[34px] leading-tight md:text-[48px]">
+        {t('Code review did not scale. Now it has to.')}
       </h2>
       <div className="mt-12 grid gap-4 md:grid-cols-3">
         {statementCards.map((card) => (
           <div className="rounded-xl bg-lp-panel p-7" key={card.title}>
             <h3 className="text-[16px] font-medium text-lp-fg">{card.title}</h3>
-            <p className="mt-3 text-sm leading-relaxed text-lp-fg-secondary">{card.body}</p>
+            <p className="lp-copy mt-3 text-sm leading-relaxed text-lp-fg-secondary">{card.body}</p>
           </div>
         ))}
       </div>
@@ -320,18 +334,19 @@ export function Statement() {
 }
 
 export function FinalCta() {
+  const { t } = useLandingI18n();
   return (
     <section className="lp-container flex flex-col items-center pt-28 pb-32 md:pt-36">
-      <h2 className="lp-heading text-center text-[40px] leading-tight md:text-[64px]">
-        Try Review Tour now.
+      <h2 className="lp-heading lp-heading-cta text-center text-[40px] leading-tight md:text-[64px]">
+        {t('Try Review Tour now.')}
       </h2>
-      <p className="mt-5 text-center text-[15px] text-lp-fg-secondary">
-        Free, open source, no sign-up — reviewing in under a minute.
+      <p className="lp-copy mt-5 text-center text-[15px] text-lp-fg-secondary">
+        {t('Free, open source, no sign-up — reviewing in under a minute.')}
       </p>
       <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
         <SkillInstallCommand />
         <a className="lp-pill lp-pill-secondary" href={GITHUB_URL} rel="noreferrer" target="_blank">
-          Star on GitHub
+          {t('Star on GitHub')}
           <ArrowRightIcon />
         </a>
       </div>
@@ -339,37 +354,38 @@ export function FinalCta() {
   );
 }
 
-const footerColumns = [
-  {
-    title: 'Product',
-    links: [
-      { label: 'Features', href: '#features' },
-      { label: 'Demo', href: '#demo' },
-      { label: 'Install', href: '#install' },
-    ],
-  },
-  {
-    title: 'Resources',
-    links: [
-      { label: 'Quick start', href: `${GITHUB_URL}#quick-start` },
-      { label: 'How it works', href: `${GITHUB_URL}#how-it-works` },
-      { label: 'CLI commands', href: `${GITHUB_URL}#cli-commands` },
-      { label: 'Releases', href: `${GITHUB_URL}/releases` },
-      { label: 'npm package', href: 'https://www.npmjs.com/package/review-tour' },
-    ],
-  },
-  {
-    title: 'Project',
-    links: [
-      { label: 'GitHub', href: GITHUB_URL },
-      { label: 'Issues', href: `${GITHUB_URL}/issues` },
-      { label: 'Security', href: `${GITHUB_URL}/blob/main/SECURITY.md` },
-      { label: 'License', href: `${GITHUB_URL}/blob/main/LICENSE` },
-    ],
-  },
-];
-
 export function Footer() {
+  const { t } = useLandingI18n();
+  const footerColumns = [
+    {
+      title: t('Product'),
+      links: [
+        { label: t('Features'), href: '#features' },
+        { label: t('Demo'), href: '#demo' },
+        { label: t('Install'), href: '#install' },
+      ],
+    },
+    {
+      title: t('Resources'),
+      links: [
+        { label: t('Quick start'), href: `${GITHUB_URL}#quick-start` },
+        { label: t('How it works'), href: `${GITHUB_URL}#how-it-works` },
+        { label: t('CLI commands'), href: `${GITHUB_URL}#cli-commands` },
+        { label: t('Releases'), href: `${GITHUB_URL}/releases` },
+        { label: t('npm package'), href: 'https://www.npmjs.com/package/review-tour' },
+      ],
+    },
+    {
+      title: t('Project'),
+      links: [
+        { label: 'GitHub', href: GITHUB_URL },
+        { label: t('Issues'), href: `${GITHUB_URL}/issues` },
+        { label: t('Security'), href: `${GITHUB_URL}/blob/main/SECURITY.md` },
+        { label: t('License'), href: `${GITHUB_URL}/blob/main/LICENSE` },
+      ],
+    },
+  ];
+
   return (
     <footer className="border-t border-lp-line">
       <div className="lp-container py-14">
@@ -396,9 +412,11 @@ export function Footer() {
         </div>
         <div className="mt-14 flex flex-wrap items-center justify-between gap-4 border-t border-lp-line pt-6">
           <p className="text-[13px] text-lp-fg-muted">
-            © {new Date().getFullYear()} Review Tour contributors · Apache-2.0
+            © {new Date().getFullYear()} {t('Review Tour contributors')} · Apache-2.0
           </p>
-          <p className="text-[13px] text-lp-fg-muted">Guided code review for the agent era</p>
+          <p className="text-[13px] text-lp-fg-muted">
+            {t('Guided code review for the agent era')}
+          </p>
         </div>
       </div>
     </footer>

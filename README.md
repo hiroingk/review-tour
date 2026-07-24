@@ -21,6 +21,10 @@ rather than from CLI flags.
   Claude Code.
 - Open an interactive local viewer with AI-authored chapters, file navigation,
   and diff review.
+- Jump from symbol references in the diff to their definitions across files and
+  chapters.
+- Use the viewer and landing page in English or Japanese. The browser language
+  selects the initial locale, and the language control remembers manual changes.
 - Keep runtime artifacts out of the reviewed repository.
 - Keep the CLI, viewer, schema, and skill instructions version-aligned through
   the npm package.

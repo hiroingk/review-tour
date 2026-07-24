@@ -7,6 +7,7 @@ import type { ReviewChapter, ReviewPrologue, ReviewTour } from 'review-tour/sche
 import { Button } from '#/components/ui/button';
 import { Card, CardPanel } from '#/components/ui/card';
 import { getChapterStats } from '../reviewModel';
+import { LanguageControl, type Translator, useI18n } from './i18n';
 import { MarkdownInlineText, MarkdownText } from './MarkdownText';
 import { ThemeModeControl } from './theme';
 import {
@@ -34,6 +35,7 @@ export function TourOverview({
   onToggleChapterCompleted: (chapter: ReviewChapter) => void;
   tour: ReviewTour;
 }) {
+  const { t } = useI18n();
   const completedCount = tour.tour.chapters.filter((chapter) =>
     completedChapterIds.has(chapter.id),
   ).length;
@@ -41,7 +43,7 @@ export function TourOverview({
     (chapter) => !completedChapterIds.has(chapter.id),
   )?.id;
   const visibleWarnings = tour.warnings.filter((warning) => warning.code !== 'BASE_BRANCH_GUESSED');
-  const prologue = getOverviewPrologue(tour);
+  const prologue = getOverviewPrologue(tour, t);
 
   return (
     <main className="min-h-screen bg-canvas text-fg lg:grid lg:h-screen lg:grid-rows-[auto_minmax(0,1fr)] lg:overflow-hidden">
@@ -64,17 +66,20 @@ export function TourOverview({
             </span>
           </span>
         </div>
-        <IconButton icon={Search01Icon} label="Search" onClick={onSearchOpen} />
-        <ThemeModeControl className="max-sm:col-span-2 max-sm:justify-self-start" />
+        <IconButton icon={Search01Icon} label={t('Search')} onClick={onSearchOpen} />
+        <div className="flex items-center gap-2 max-sm:col-span-2 max-sm:justify-self-start">
+          <LanguageControl />
+          <ThemeModeControl />
+        </div>
       </header>
 
       <div className="grid gap-6 px-6 py-3 max-sm:px-4 lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:overflow-hidden">
         <aside className="min-w-0 lg:grid lg:min-h-0 lg:grid-rows-[auto_minmax(0,1fr)] lg:gap-y-1">
-          <PanelHeading label="Prologue" />
+          <PanelHeading label={t('Prologue')} />
           <Card className="min-h-0 overflow-auto rounded-[8px] border-0 bg-raised-strong p-6 text-fg shadow-[var(--shadow-panel)] before:rounded-[7px] before:shadow-[inset_0_1px_0_oklch(100%_0_0_/_4%)] max-lg:mt-1">
             <CardPanel className="min-h-full p-0">
               <section>
-                <SectionLabel>Why this PR?</SectionLabel>
+                <SectionLabel>{t('Why this PR?')}</SectionLabel>
                 <MarkdownText
                   className="mt-3 grid gap-3 text-sm leading-[1.55] text-fg-secondary"
                   text={prologue.whyThisPr}
@@ -82,7 +87,7 @@ export function TourOverview({
               </section>
 
               <section className="mt-6">
-                <SectionLabel>What it does</SectionLabel>
+                <SectionLabel>{t('What it does')}</SectionLabel>
                 <MarkdownText
                   className="mt-3 grid gap-3 text-sm leading-[1.55] text-fg-secondary"
                   text={prologue.whatItDoes}
@@ -90,7 +95,7 @@ export function TourOverview({
               </section>
 
               <section className="mt-6">
-                <SectionLabel>Key changes</SectionLabel>
+                <SectionLabel>{t('Key changes')}</SectionLabel>
                 <ul className="mt-5 grid gap-4">
                   {tour.tour.chapters.slice(0, 4).map((chapter) => (
                     <li
@@ -121,7 +126,7 @@ export function TourOverview({
         </aside>
 
         <section className="min-w-0">
-          <PanelHeading label="Chapters">
+          <PanelHeading label={t('Chapters')}>
             <ChapterOverviewStats
               additions={tour.diff.stats.additions}
               completedCount={completedCount}
@@ -150,11 +155,12 @@ export function TourOverview({
 }
 
 function ReviewFocus({ items }: { items: ReviewPrologue['reviewFocus'] }) {
+  const { t } = useI18n();
   if (items.length === 0) return null;
 
   return (
     <section className="mt-6 pb-3">
-      <SectionLabel>Review Focus</SectionLabel>
+      <SectionLabel>{t('Review Focus')}</SectionLabel>
       <div className="mt-4 grid gap-4">
         {items.map((item, index) => (
           <article className="grid min-w-0 gap-1.5" key={`${item.title}:${item.path ?? index}`}>
@@ -196,16 +202,26 @@ function ChapterOverviewStats({
   deletions: number;
   totalCount: number;
 }) {
+  const { t } = useI18n();
+  const reviewed = `${completedCount}/${totalCount}`;
   return (
     <div
-      aria-label={`${additions} additions, ${deletions} deletions, ${completedCount}/${totalCount} reviewed`}
+      aria-label={t('{additions} additions, {deletions} deletions, {reviewed} reviewed', {
+        additions,
+        deletions,
+        reviewed,
+      })}
       className="mono-tabular flex min-w-0 items-center gap-2 text-[11px] font-semibold normal-case tracking-normal"
-      title={`${additions} additions, ${deletions} deletions, ${completedCount}/${totalCount} reviewed`}
+      title={t('{additions} additions, {deletions} deletions, {reviewed} reviewed', {
+        additions,
+        deletions,
+        reviewed,
+      })}
     >
       <span className="font-mono text-add">+{additions}</span>
       <span className="font-mono text-delete">-{deletions}</span>
       <strong className="ml-1 truncate text-xs font-medium text-fg-secondary">
-        {completedCount}/{totalCount} reviewed
+        {t('{reviewed} reviewed', { reviewed })}
       </strong>
     </div>
   );
@@ -215,7 +231,7 @@ function getFileName(path: string) {
   return path.split(/[\\/]/).filter(Boolean).at(-1) ?? path;
 }
 
-function getOverviewPrologue(tour: ReviewTour): ReviewPrologue {
+function getOverviewPrologue(tour: ReviewTour, t: Translator): ReviewPrologue {
   if (tour.tour.prologue) {
     return tour.tour.prologue;
   }
@@ -231,7 +247,7 @@ function getOverviewPrologue(tour: ReviewTour): ReviewPrologue {
         .slice(0, 3)
         .map((chapter) => chapter.summary)
         .join('\n\n') ||
-      'Review the changed files and confirm each chapter matches the diff intent.',
+      t('Review the changed files and confirm each chapter matches the diff intent.'),
     reviewFocus: topChapters.map((chapter) => ({
       title: chapter.title,
       path: chapter.files[0]?.path,
@@ -264,6 +280,7 @@ function ChapterRow({
   showStartButton: boolean;
   stats: ReturnType<typeof getChapterStats>;
 }) {
+  const { t } = useI18n();
   return (
     <article
       aria-current={active ? 'true' : undefined}
@@ -274,7 +291,7 @@ function ChapterRow({
         <ChapterReviewedToggle
           completed={completed}
           onToggle={() => onToggleCompleted(chapter)}
-          title={completed ? 'Mark chapter as not reviewed' : 'Mark chapter as reviewed'}
+          title={completed ? t('Mark chapter as not reviewed') : t('Mark chapter as reviewed')}
           variant="icon"
         />
       </div>
@@ -305,7 +322,7 @@ function ChapterRow({
             }}
             variant="success"
           >
-            Start reviewing
+            {t('Start reviewing')}
             <AppIcon className="-mr-0.5" icon={ArrowRight01Icon} size={17} />
           </Button>
         ) : null}

@@ -5,6 +5,7 @@ import Sun01Icon from '@hugeicons/core-free-icons/Sun01Icon';
 import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react';
 import { ToggleGroup, ToggleGroupItem } from '#/components/ui/toggle-group';
 import { cn } from '#/lib/utils';
+import { type MessageKey, useI18n } from './i18n';
 import { THEME_STORAGE_KEY } from './themeInit';
 
 type ThemePreference = 'system' | 'light' | 'dark';
@@ -12,8 +13,8 @@ type ThemePreference = 'system' | 'light' | 'dark';
 const themeOptions: {
   value: ThemePreference;
   icon: IconSvgElement;
-  label: string;
-  title: string;
+  label: MessageKey;
+  title: MessageKey;
 }[] = [
   {
     value: 'system',
@@ -26,6 +27,7 @@ const themeOptions: {
 ];
 
 export function ThemeModeControl({ className }: { className?: string }) {
+  const { t } = useI18n();
   const [preference, setPreference] = useState<ThemePreference>(() => readThemePreference());
 
   const handleValueChange = (values: string[]) => {
@@ -50,22 +52,29 @@ export function ThemeModeControl({ className }: { className?: string }) {
   }, [preference]);
 
   return (
-    <ThemeModeToggle className={className} onValueChange={handleValueChange} value={preference} />
+    <ThemeModeToggle
+      className={className}
+      onValueChange={handleValueChange}
+      translate={t}
+      value={preference}
+    />
   );
 }
 
 function ThemeModeToggle({
   className,
   onValueChange,
+  translate,
   value,
 }: {
   className?: string;
   onValueChange: (values: string[]) => void;
+  translate: ReturnType<typeof useI18n>['t'];
   value: ThemePreference;
 }) {
   return (
     <ToggleGroup
-      aria-label="Theme"
+      aria-label={translate('Theme')}
       className={cn('h-9 rounded-[10px] bg-raised p-0.5 shadow-control', className)}
       onValueChange={onValueChange}
       size="sm"
@@ -73,10 +82,10 @@ function ThemeModeToggle({
     >
       {themeOptions.map((option) => (
         <ToggleGroupItem
-          aria-label={option.label}
+          aria-label={translate(option.label)}
           className="min-h-0 size-8 rounded-[8px] px-0 data-pressed:bg-control data-pressed:shadow-control"
           key={option.value}
-          title={option.title}
+          title={translate(option.title)}
           value={option.value}
         >
           <HugeiconsIcon

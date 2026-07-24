@@ -49,7 +49,11 @@ export function createViewerServer(options: ViewerOptions = {}) {
 
       await renderStartApp(request, response, cacheDir);
     } catch (error) {
-      sendHtml(response, 500, renderErrorPage(getSafeErrorMessage(error)));
+      sendHtml(
+        response,
+        500,
+        renderErrorPage(getSafeErrorMessage(error), getRequestLocale(request)),
+      );
     }
   });
 }
@@ -81,7 +85,17 @@ async function renderStartApp(
   try {
     await stat(serverEntryPath);
   } catch {
-    sendHtml(response, 500, renderErrorPage('Viewer app build not found. Run `vp build` first.'));
+    const locale = getRequestLocale(request);
+    sendHtml(
+      response,
+      500,
+      renderErrorPage(
+        locale === 'ja'
+          ? 'viewer アプリのビルドが見つかりません。先に `vp build` を実行してください。'
+          : 'Viewer app build not found. Run `vp build` first.',
+        locale,
+      ),
+    );
     return;
   }
 
@@ -211,13 +225,14 @@ function sendJson(response: ServerResponse, statusCode: number, body: unknown) {
   response.end(JSON.stringify(body));
 }
 
-function renderErrorPage(message: string) {
+function renderErrorPage(message: string, locale: 'en' | 'ja') {
+  const title = locale === 'ja' ? 'Review Tour エラー' : 'Review Tour Error';
   return `<!doctype html>
-<html lang="en">
+<html lang="${locale}">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Review Tour Error</title>
+    <title>${title}</title>
     <style>
       :root {
         color-scheme: dark;
@@ -240,11 +255,18 @@ function renderErrorPage(message: string) {
   </head>
   <body>
     <main>
-      <h1>Review Tour Error</h1>
+      <h1>${title}</h1>
       <p>${escapeHtml(message)}</p>
     </main>
   </body>
 </html>`;
+}
+
+function getRequestLocale(request: IncomingMessage): 'en' | 'ja' {
+  const acceptLanguage = request.headers['accept-language']?.toLowerCase() ?? '';
+  return acceptLanguage.split(',').some((language) => language.trim().startsWith('ja'))
+    ? 'ja'
+    : 'en';
 }
 
 function escapeHtml(value: unknown) {

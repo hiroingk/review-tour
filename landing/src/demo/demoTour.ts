@@ -1,4 +1,5 @@
 import type { DiffFile, ReviewTour } from 'review-tour/schema';
+import type { Locale } from '#/client/i18n';
 
 const verifySignatureFile: DiffFile = {
   id: 'file-verify-signature',
@@ -446,7 +447,7 @@ const envFile: DiffFile = {
   ],
 };
 
-export const demoTour: ReviewTour = {
+const demoTour: ReviewTour = {
   schemaVersion: 'review-tour/v1',
   id: 'demo-webhook-hardening',
   createdAt: '2026-07-04T09:00:00.000Z',
@@ -563,3 +564,63 @@ export const demoTour: ReviewTour = {
   },
   warnings: [],
 };
+
+export function getDemoTour(locale: Locale): ReviewTour {
+  if (locale === 'en') return demoTour;
+
+  const localizedChapters: Record<
+    string,
+    Pick<
+      ReviewTour['tour']['chapters'][number],
+      'rationale' | 'reviewQuestions' | 'summary' | 'title'
+    >
+  > = {
+    'chapter-verify': {
+      title: 'Webhookペイロードを処理する前に署名を検証する',
+      summary:
+        'リクエスト本文を解析する前に、HMAC署名とタイムスタンプの有効範囲を検証します。署名がないリクエストや、古いリクエストは400で拒否します。',
+      rationale:
+        'Webhookの受信時に正しく認証できなければ、攻撃者に支払いイベントを偽装されるおそれがあります。',
+      reviewQuestions: [
+        'ヘッダー形式にかかわらず、署名は一定時間で比較されていますか？',
+        'ヘッダーがない場合は400と401のどちらを返すべきですか？',
+        '5分の有効範囲は現在のリトライ方針と合っていますか？',
+      ],
+    },
+    'chapter-idempotency': {
+      title: 'イベントの重複処理を防ぎ、失敗時は上限付きで再試行する',
+      summary:
+        'Stripeは同じイベントを再送することがあるため、処理済みIDを記録して重複実行を防ぎます。ハンドラーが失敗した場合は、間隔を空けて最大3回再試行します。',
+      rationale:
+        '重複配信や一時的な失敗があっても、支払いイベントを二重処理したり、取りこぼしたりしないための変更です。',
+      reviewQuestions: [
+        'ハンドラー成功後にmarkProcessedが失敗した場合、再送時にどうなりますか？',
+        '72時間のTTLはStripeの最大リトライ期間より長いですか？',
+      ],
+    },
+    'chapter-tests': {
+      title: '署名検証のテストと環境設定を追加する',
+      summary:
+        '署名ヘッダーがない場合、タイムスタンプが古い場合、正常な場合をテストします。Webhookシークレットを必須環境変数として追加し、ログには出力しません。',
+      rationale: 'テストと設定で、新しい署名検証の動作を継続的に保証します。',
+      reviewQuestions: [
+        '有効なタイムスタンプを持つ、改ざん済みのペイロードもテストしていますか？',
+        'STRIPE_WEBHOOK_SECRETは環境ごとにローテーションすべきですか？',
+      ],
+    },
+  };
+
+  return {
+    ...demoTour,
+    tour: {
+      ...demoTour.tour,
+      title: 'Stripe Webhookに署名検証と重複実行の防止を追加',
+      summary:
+        'WebhookリクエストをHMAC署名で検証し、同じイベントの重複処理を防ぎます。失敗時の再試行と、新しい動作を保証するテストも追加します。',
+      chapters: demoTour.tour.chapters.map((chapter) => ({
+        ...chapter,
+        ...localizedChapters[chapter.id],
+      })),
+    },
+  };
+}

@@ -12,6 +12,7 @@ import LinkSquare02Icon from '@hugeicons/core-free-icons/LinkSquare02Icon';
 import type { ReviewChapter, ReviewTour } from 'review-tour/schema';
 import { buildSymbolIndex, type SymbolDefinition } from './symbolIndex';
 import { fileDomId } from './dom';
+import { useI18n } from './i18n';
 import { AppIcon } from './ui';
 
 export type SymbolNavigationValue = {
@@ -51,6 +52,7 @@ export function SymbolNavigationProvider({
   onChapterSelect: (chapter: ReviewChapter) => void;
   tour: ReviewTour;
 }) {
+  const { t } = useI18n();
   const [popover, setPopover] = useState<SymbolPopoverState | null>(null);
   const [pendingJump, setPendingJump] = useState<SymbolDefinition | null>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -176,7 +178,7 @@ export function SymbolNavigationProvider({
           <header className="flex items-baseline gap-2 border-b border-hairline px-3 py-2">
             <span className="font-mono text-xs font-semibold text-fg">{popover.name}</span>
             <span className="text-[11px] text-fg-muted">
-              {popover.definitions.length} definitions
+              {t('{count} definitions', { count: popover.definitions.length })}
             </span>
           </header>
           <ul className="max-h-72 overflow-y-auto py-1">
@@ -198,10 +200,12 @@ export function SymbolNavigationProvider({
                   </code>
                 </button>
                 <a
-                  aria-label={`Open ${definition.filePath}:${definition.lineNumber} in editor`}
+                  aria-label={t('Open {location} in editor', {
+                    location: `${definition.filePath}:${definition.lineNumber}`,
+                  })}
                   className="focus-ring grid size-7 place-items-center rounded-[6px] text-fg-faint transition-colors duration-150 hover:bg-hover hover:text-fg"
                   href={getEditorUrl(tour.repository.root, definition)}
-                  title="Open in editor"
+                  title={t('Open in editor')}
                 >
                   <AppIcon icon={LinkSquare02Icon} size={14} />
                 </a>

@@ -100,16 +100,21 @@ export function getReviewCommentLineLabel(range: ReviewCommentRange) {
   return start === end ? `L${start}` : `L${Math.min(start, end)}-L${Math.max(start, end)}`;
 }
 
-export function getReviewCommentSnippet(range: ReviewCommentRange) {
+export function getReviewCommentSnippet(range: ReviewCommentRange, locale: Locale = 'en') {
   const content = range.lines.find((line) => line.content.trim())?.content.trim();
-  if (!content) return 'Blank line';
+  if (!content) return locale === 'ja' ? '空行' : 'Blank line';
 
   return content.length > 96 ? `${content.slice(0, 95)}...` : content;
 }
 
-export function formatReviewCommentsForCodex(comments: readonly ReviewComment[]) {
+export function formatReviewCommentsForCodex(
+  comments: readonly ReviewComment[],
+  locale: Locale = 'en',
+) {
   const sorted = sortReviewComments(comments);
   if (sorted.length === 0) return '';
+  const commentLabel = locale === 'ja' ? 'コメント:' : 'Comment:';
+  const selectedCodeLabel = locale === 'ja' ? '選択されたコード:' : 'Selected code:';
 
   const sections = sorted.flatMap((comment, index) => {
     const code = formatSelectedCode(comment.range);
@@ -118,10 +123,10 @@ export function formatReviewCommentsForCodex(comments: readonly ReviewComment[])
     return [
       `## ${index + 1}. ${getReviewCommentLocation(comment.range)}`,
       '',
-      'Comment:',
+      commentLabel,
       comment.body.trim(),
       '',
-      'Selected code:',
+      selectedCodeLabel,
       fence,
       code,
       fence,
@@ -129,7 +134,13 @@ export function formatReviewCommentsForCodex(comments: readonly ReviewComment[])
     ];
   });
 
-  return ['Please address the following review comments from Review Tour.', '', ...sections]
+  return [
+    locale === 'ja'
+      ? 'Review Tour の以下のレビューコメントに対応してください。'
+      : 'Please address the following review comments from Review Tour.',
+    '',
+    ...sections,
+  ]
     .join('\n')
     .trimEnd();
 }
@@ -278,3 +289,4 @@ function asString(value: unknown) {
 function asNumber(value: unknown) {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }
+import type { Locale } from './i18n';
