@@ -1,6 +1,6 @@
 {
   "name": "review-tour",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "description": "Create browser-based guided review tours from local git diffs.",
   "keywords": [
     "code-review",
