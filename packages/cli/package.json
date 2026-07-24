@@ -1,6 +1,6 @@
 {
   "name": "@review-tour/cli",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "private": true,
   "description": "CLI for creating and opening guided review tours from local git diffs.",
   "license": "Apache-2.0",

@@ -1,6 +1,6 @@
 {
   "name": "@review-tour/viewer",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "private": true,
   "description": "Localhost viewer for guided Review Tour artifacts.",
   "license": "Apache-2.0",
