@@ -15,12 +15,18 @@ Artifacts must live in OS cache, not in the repository.
 ## CLI Contract
 
 The skill's default path must collect the diff, create AI-authored review
-chapters, and then write the official artifact:
+chapters with file-level review groups, and then write the official artifact:
 
 ```bash
-review-tour collect --json
+review-tour collect --mode working-tree --include-untracked --output <draft.json>
 review-tour write --draft <draft.json> --chapters <chapters.json> --open --json
 ```
+
+The agent workflow stores the full collected draft under the OS temporary
+directory instead of emitting it to stdout. `--include-untracked` ensures a
+working-tree review includes non-ignored files that are not in Git yet.
+Without that flag, collection must record an `UNTRACKED_FILES_SKIPPED` warning
+instead of silently omitting those files.
 
 The one-command deterministic path is a fallback only when AI chapter generation
 fails:
@@ -39,13 +45,28 @@ substitute review artifacts.
 
 The CLI must reject or repair invalid artifacts before the viewer opens:
 
-- unknown hunk IDs
-- empty chapters
-- uncovered hunks
+- unknown chapter or review group hunk IDs
+- empty chapters or review groups with no hunk IDs
+- uncovered chapter hunks or file hunks not assigned to a review group
+- duplicate review group IDs or hunk assignments within a file
+- review groups that reference non-contiguous hunks
 - invalid repo hash or tour ID
 - invalid artifact schema
 
-Unknown hunk IDs are hard errors. Uncovered hunks are repaired by fallback chapter generation plus an `LLM_PARTIAL_COVERAGE` warning.
+Unknown hunk IDs, authored group entries with no hunk IDs, duplicate group IDs
+or assignments, and non-contiguous group assignments are hard errors. Uncovered chapter hunks are
+repaired by fallback chapter generation plus an `LLM_PARTIAL_COVERAGE` warning.
+When a file includes authored groups, hunks not assigned to one are repaired
+with deterministic `Additional changes` groups.
+
+`ReviewChapterFile.groups` remains optional in `review-tour/v1` so older cached
+artifacts stay readable. The normal AI-authored workflow must include at least
+one group for every file entry. Each group uses only existing hunk IDs from that
+file, contains contiguous hunks in display order, does not overlap another group,
+and collectively covers every hunk in the file entry.
+
+`--open` starts or reuses the localhost viewer server and returns its URL. It
+does not launch a system browser.
 
 ## Viewer Contract
 

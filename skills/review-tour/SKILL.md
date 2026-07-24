@@ -45,7 +45,7 @@ After loading the core workflow with `review-tour skills get core`, the normal
 AI-authored viewer path is:
 
 ```bash
-review-tour collect --json
+review-tour collect --mode working-tree --include-untracked --output <draft.json>
 review-tour write --draft <draft.json> --chapters - --open --json
 ```
 

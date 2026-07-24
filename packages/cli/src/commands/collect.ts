@@ -1,11 +1,20 @@
 import { writeFile } from 'node:fs/promises';
+import path from 'node:path';
 import type { ReviewTour, ReviewTourDraft, ReviewWarning } from 'review-tour/schema';
 import { assertReviewTourDraft } from 'review-tour/schema';
-import { getStringOption, hasFlag, type ParsedArgs } from '../cliArgs.js';
+import {
+  assertAllowedOptions,
+  assertBooleanOptions,
+  assertNoPositionals,
+  assertStringOptions,
+  getStringOption,
+  hasFlag,
+  type ParsedArgs,
+} from '../cliArgs.js';
 import { parseUnifiedDiff } from '../diff/parseUnifiedDiff.js';
 import { detectBaseBranch } from '../git/detectBaseBranch.js';
 import { createDirtyWarning, detectRepo } from '../git/detectRepo.js';
-import { getDiff, hasDiff, type DiffMode } from '../git/getDiff.js';
+import { getDiff, getUntrackedPaths, hasDiff, type DiffMode } from '../git/getDiff.js';
 import { getLocalGitHubRepositories } from '../git/remotes.js';
 import {
   parseGitHubPullRequestUrl,
@@ -18,6 +27,12 @@ import { getCliVersion } from '../version.js';
 const version = getCliVersion();
 
 export async function collectCommand(args: ParsedArgs) {
+  validateCollectArgs(args);
+  if (hasFlag(args, 'help')) {
+    process.stdout.write(collectHelpText());
+    return;
+  }
+
   const draft = collectDraft(args);
   const outputPath = getStringOption(args, 'output');
   const json = `${JSON.stringify(draft, null, 2)}\n`;
@@ -31,12 +46,16 @@ export async function collectCommand(args: ParsedArgs) {
   }
 
   process.stdout.write(
-    `Collected ${draft.diff.stats.filesChanged} files, ${draft.diff.stats.additions} additions, ${draft.diff.stats.deletions} deletions.\n`,
+    [
+      `Collected ${draft.diff.stats.filesChanged} files, ${draft.diff.stats.additions} additions, ${draft.diff.stats.deletions} deletions.`,
+      `Wrote ${path.resolve(outputPath)}.`,
+    ].join('\n') + '\n',
   );
 }
 
 export function collectDraft(args: ParsedArgs) {
   const repo = detectRepo(process.cwd());
+  const includeUntracked = hasFlag(args, 'include-untracked');
   const pullRequestSelector = getPullRequestSelector(args);
   if (pullRequestSelector !== undefined) {
     assertPullRequestOptions(args);
@@ -64,16 +83,29 @@ export function collectDraft(args: ParsedArgs) {
     requestedMode: getStringOption(args, 'mode'),
     baseBranch: base.baseBranch,
     head,
+    includeUntracked,
   });
+  if (includeUntracked && mode !== 'working-tree') {
+    throw new Error('--include-untracked can only be used with working-tree mode.');
+  }
+  const untrackedPaths = mode === 'working-tree' ? getUntrackedPaths(repo.root) : [];
 
   const unifiedDiff = getDiff({
     repoRoot: repo.root,
     mode,
     baseBranch: base.baseBranch,
     head,
+    includeUntracked,
+    untrackedPaths,
   });
 
   if (unifiedDiff.length === 0) {
+    if (untrackedPaths.length > 0 && !includeUntracked) {
+      throw new Error(
+        `${untrackedPaths.length} untracked file(s) were skipped. Rerun with --mode working-tree --include-untracked.`,
+      );
+    }
+
     throw new Error(
       [
         'No changes found.',
@@ -88,6 +120,9 @@ export function collectDraft(args: ParsedArgs) {
   const warnings: ReviewWarning[] = [
     ...base.warnings,
     ...(mode === 'base...head' ? [] : createDirtyWarning(repo.isDirty)),
+    ...(mode === 'working-tree' && untrackedPaths.length > 0 && !includeUntracked
+      ? [createUntrackedFilesSkippedWarning(untrackedPaths)]
+      : []),
     ...parsedDiff.warnings,
   ];
 
@@ -183,7 +218,7 @@ export function createPullRequestDraft(input: {
 }
 
 function assertPullRequestOptions(args: ParsedArgs) {
-  for (const option of ['base', 'head', 'mode']) {
+  for (const option of ['base', 'head', 'include-untracked', 'mode']) {
     if (args.options.has(option)) {
       throw new Error(`review-tour collect --pr cannot be combined with --${option}.`);
     }
@@ -224,6 +259,7 @@ function inferDiffMode(input: {
   requestedMode?: string;
   baseBranch: string;
   head: string;
+  includeUntracked: boolean;
 }): DiffMode {
   if (input.requestedMode) {
     if (isDiffMode(input.requestedMode)) {
@@ -260,8 +296,13 @@ function inferDiffMode(input: {
       mode: 'working-tree',
       baseBranch: input.baseBranch,
       head: input.head,
+      includeUntracked: input.includeUntracked,
     })
   ) {
+    return 'working-tree';
+  }
+
+  if (getUntrackedPaths(input.repoRoot).length > 0) {
     return 'working-tree';
   }
 
@@ -277,4 +318,47 @@ function createTourId() {
     .toISOString()
     .replace(/[-:.TZ]/g, '')
     .slice(0, 14)}`;
+}
+
+export function validateCollectArgs(args: ParsedArgs) {
+  assertNoPositionals(args, 'collect');
+  assertAllowedOptions(args, 'collect', [
+    'base',
+    'head',
+    'help',
+    'include-untracked',
+    'json',
+    'mode',
+    'output',
+    'pr',
+  ]);
+  assertBooleanOptions(args, ['help', 'include-untracked', 'json']);
+  assertStringOptions(args, ['base', 'head', 'mode', 'output', 'pr']);
+}
+
+export function collectHelpText() {
+  return `review-tour collect
+
+Usage:
+  review-tour collect [--pr <url|number>] [--base origin/main] [--head HEAD]
+    [--mode base...head|working-tree|staged|custom] [--include-untracked]
+    [--output <path>] [--json]
+
+Options:
+  --include-untracked  Include untracked, non-ignored files in working-tree mode.
+  --output <path>      Write the full draft JSON to a file. Omit --json to suppress full stdout.
+  --json               Print the full draft JSON to stdout.
+  --help               Show this help.
+`;
+}
+
+export function createUntrackedFilesSkippedWarning(paths: readonly string[]): ReviewWarning {
+  const examples = paths.slice(0, 3).join(', ');
+  const remaining = paths.length - Math.min(paths.length, 3);
+  return {
+    code: 'UNTRACKED_FILES_SKIPPED',
+    message: `${paths.length} untracked file(s) were skipped${examples ? `: ${examples}` : ''}${
+      remaining > 0 ? `, and ${remaining} more` : ''
+    }. Rerun with --include-untracked to include them.`,
+  };
 }

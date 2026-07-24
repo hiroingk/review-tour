@@ -3,12 +3,22 @@ import {
   assertReviewTour,
   assertReviewTourDraft,
   type ReviewChapter,
+  type ReviewGroup,
   type ReviewPrologue,
   type ReviewTour,
   type ReviewTourDraft,
   type ReviewWarning,
 } from 'review-tour/schema';
-import { getNumberOption, getStringOption, hasFlag, type ParsedArgs } from '../cliArgs.js';
+import {
+  assertAllowedOptions,
+  assertBooleanOptions,
+  assertNoPositionals,
+  assertStringOptions,
+  getNumberOption,
+  getStringOption,
+  hasFlag,
+  type ParsedArgs,
+} from '../cliArgs.js';
 import { readJsonInput } from '../artifact/readJson.js';
 import { writeArtifact } from '../artifact/store.js';
 import { launchViewer } from './open.js';
@@ -32,6 +42,12 @@ type HunkInfo = {
 };
 
 export async function writeCommand(args: ParsedArgs) {
+  validateWriteArgs(args);
+  if (hasFlag(args, 'help')) {
+    process.stdout.write(writeHelpText());
+    return;
+  }
+
   const draftPath = getStringOption(args, 'draft');
   const chaptersPath = getStringOption(args, 'chapters');
   if (!draftPath) {
@@ -123,7 +139,7 @@ function parseChaptersPayload(input: unknown): ChaptersPayload {
   };
 }
 
-function normalizeAndRepairChapters(draft: ReviewTourDraft, chapters: ReviewChapter[]) {
+export function normalizeAndRepairChapters(draft: ReviewTourDraft, chapters: ReviewChapter[]) {
   const hunkInfo = createHunkInfoMap(draft);
   const knownHunks = new Set(hunkInfo.keys());
   const normalized = chapters.map((chapter, index) => {
@@ -141,7 +157,12 @@ function normalizeAndRepairChapters(draft: ReviewTourDraft, chapters: ReviewChap
       ...chapter,
       index: chapter.index || index + 1,
       hunkIds,
-      files: createChapterFiles({ hunkIds, hunkInfo }),
+      files: createChapterFiles({
+        fallbackRisk: chapter.risk,
+        hunkIds,
+        hunkInfo,
+        sourceFiles: chapter.files,
+      }),
     };
   });
 
@@ -252,16 +273,27 @@ function createFallbackChapter(
     rationale: 'Every hunk must be reviewable, so the CLI grouped the uncovered hunks here.',
     reviewQuestions: ['Do these uncovered hunks need their own review chapter?'],
     hunkIds,
-    files: createChapterFiles({ hunkIds, hunkInfo }),
+    files: createChapterFiles({
+      createFallbackGroups: true,
+      fallbackRisk: 'medium',
+      hunkIds,
+      hunkInfo,
+    }),
   };
 }
 
 function createChapterFiles({
+  createFallbackGroups = false,
+  fallbackRisk,
   hunkIds,
   hunkInfo,
+  sourceFiles = [],
 }: {
+  createFallbackGroups?: boolean;
+  fallbackRisk: ReviewChapter['risk'];
   hunkIds: string[];
   hunkInfo: Map<string, HunkInfo>;
+  sourceFiles?: ReviewChapter['files'];
 }): ReviewChapter['files'] {
   const byPath = new Map<string, string[]>();
   for (const hunkId of hunkIds) {
@@ -275,10 +307,215 @@ function createChapterFiles({
     byPath.set(filePath, existing);
   }
 
-  return [...byPath.entries()].map(([filePath, groupedHunkIds]) => ({
-    path: filePath,
-    hunkIds: groupedHunkIds,
-  }));
+  const sourceFilesByPath = new Map<string, ReviewChapter['files'][number]>();
+  for (const sourceFile of sourceFiles) {
+    const existing = sourceFilesByPath.get(sourceFile.path);
+    if (sourceFile.groups?.length && !byPath.has(sourceFile.path)) {
+      throw new Error(
+        `Review groups reference file "${sourceFile.path}" with no hunks in the chapter.`,
+      );
+    }
+    if (existing?.groups?.length && sourceFile.groups?.length) {
+      throw new Error(`Duplicate review group metadata for file "${sourceFile.path}".`);
+    }
+    if (existing?.groups?.length) {
+      continue;
+    }
+    sourceFilesByPath.set(sourceFile.path, sourceFile);
+  }
+
+  return [...byPath.entries()].map(([filePath, groupedHunkIds]) => {
+    const groups = normalizeReviewGroups({
+      createFallbackGroup: createFallbackGroups,
+      fallbackRisk,
+      filePath,
+      groups: sourceFilesByPath.get(filePath)?.groups,
+      hunkIds: groupedHunkIds,
+    });
+
+    return {
+      path: filePath,
+      hunkIds: groupedHunkIds,
+      ...(groups ? { groups } : {}),
+    };
+  });
+}
+
+function normalizeReviewGroups({
+  createFallbackGroup,
+  fallbackRisk,
+  filePath,
+  groups,
+  hunkIds,
+}: {
+  createFallbackGroup: boolean;
+  fallbackRisk: ReviewChapter['risk'];
+  filePath: string;
+  groups: ReviewGroup[] | undefined;
+  hunkIds: string[];
+}): ReviewGroup[] | undefined {
+  if (!groups?.length) {
+    return createFallbackGroup
+      ? [createFallbackReviewGroup({ fallbackRisk, filePath, hunkIds })]
+      : undefined;
+  }
+
+  const hunkIndex = new Map(hunkIds.map((hunkId, index) => [hunkId, index]));
+  const assignedHunks = new Set<string>();
+  const groupIds = new Set<string>();
+  const normalized = groups.map((group) => {
+    if (groupIds.has(group.id)) {
+      throw new Error(`Duplicate review group ID "${group.id}" in file "${filePath}".`);
+    }
+    groupIds.add(group.id);
+
+    const duplicateHunks = [
+      ...new Set(group.hunkIds.filter((hunkId, index) => group.hunkIds.indexOf(hunkId) !== index)),
+    ];
+    if (duplicateHunks.length > 0) {
+      throw new Error(
+        `Duplicate hunk IDs in review group "${group.title}" for file "${filePath}": ${duplicateHunks.join(', ')}`,
+      );
+    }
+
+    const groupHunkIds = [...group.hunkIds];
+    if (groupHunkIds.length === 0) {
+      throw new Error(`Review group "${group.title}" in file "${filePath}" must include hunkIds.`);
+    }
+
+    const unknownHunks = groupHunkIds.filter((hunkId) => !hunkIndex.has(hunkId));
+    if (unknownHunks.length > 0) {
+      throw new Error(
+        `Unknown hunk IDs in review group "${group.title}" for file "${filePath}": ${unknownHunks.join(', ')}`,
+      );
+    }
+
+    const repeatedHunks = groupHunkIds.filter((hunkId) => assignedHunks.has(hunkId));
+    if (repeatedHunks.length > 0) {
+      throw new Error(
+        `Hunk IDs assigned to multiple review groups in file "${filePath}": ${repeatedHunks.join(', ')}`,
+      );
+    }
+
+    const orderedHunkIds = [...groupHunkIds].sort(
+      (left, right) => (hunkIndex.get(left) ?? 0) - (hunkIndex.get(right) ?? 0),
+    );
+    const positions = orderedHunkIds.map((hunkId) => hunkIndex.get(hunkId) ?? 0);
+    const contiguous = positions.every(
+      (position, index) => index === 0 || position === (positions[index - 1] ?? 0) + 1,
+    );
+    if (!contiguous) {
+      throw new Error(
+        `Review group "${group.title}" in file "${filePath}" must reference contiguous hunks.`,
+      );
+    }
+
+    for (const hunkId of orderedHunkIds) {
+      assignedHunks.add(hunkId);
+    }
+
+    return { ...group, hunkIds: orderedHunkIds };
+  });
+
+  const missingHunkIds = hunkIds.filter((hunkId) => !assignedHunks.has(hunkId));
+  for (const contiguousHunkIds of splitContiguousHunkIds(missingHunkIds, hunkIndex)) {
+    const fallbackGroup = createFallbackReviewGroup({
+      fallbackRisk,
+      filePath,
+      hunkIds: contiguousHunkIds,
+      title: 'Additional changes',
+    });
+    let fallbackId = fallbackGroup.id;
+    let suffix = 2;
+    while (groupIds.has(fallbackId)) {
+      fallbackId = `${fallbackGroup.id}_${suffix}`;
+      suffix += 1;
+    }
+    groupIds.add(fallbackId);
+    normalized.push({ ...fallbackGroup, id: fallbackId });
+  }
+
+  return normalized.sort(
+    (left, right) =>
+      (hunkIndex.get(left.hunkIds[0] ?? '') ?? 0) - (hunkIndex.get(right.hunkIds[0] ?? '') ?? 0),
+  );
+}
+
+function createFallbackReviewGroup({
+  fallbackRisk,
+  filePath,
+  hunkIds,
+  title = `Review ${getFileName(filePath)}`,
+}: {
+  fallbackRisk: ReviewChapter['risk'];
+  filePath: string;
+  hunkIds: string[];
+  title?: string;
+}): ReviewGroup {
+  return {
+    id: `group_fallback_${hunkIds[0] ?? 'unassigned'}`,
+    title,
+    summary: `Review these related changes in \`${filePath}\` as one implementation unit.`,
+    risk: fallbackRisk,
+    hunkIds,
+  };
+}
+
+function splitContiguousHunkIds(hunkIds: string[], hunkIndex: Map<string, number>) {
+  const groups: string[][] = [];
+
+  for (const hunkId of hunkIds) {
+    const current = groups.at(-1);
+    const previousHunkId = current?.at(-1);
+    const followsPrevious =
+      previousHunkId !== undefined &&
+      (hunkIndex.get(hunkId) ?? 0) === (hunkIndex.get(previousHunkId) ?? 0) + 1;
+
+    if (current && followsPrevious) {
+      current.push(hunkId);
+    } else {
+      groups.push([hunkId]);
+    }
+  }
+
+  return groups;
+}
+
+export function validateWriteArgs(args: ParsedArgs) {
+  assertNoPositionals(args, 'write');
+  assertAllowedOptions(args, 'write', [
+    'chapters',
+    'draft',
+    'generator-mode',
+    'help',
+    'json',
+    'model',
+    'open',
+    'port',
+  ]);
+  assertBooleanOptions(args, ['help', 'json', 'open']);
+  assertStringOptions(args, ['chapters', 'draft', 'generator-mode', 'model', 'port']);
+}
+
+function writeHelpText() {
+  return `review-tour write
+
+Usage:
+  review-tour write --draft <path|-> --chapters <path|->
+    [--generator-mode codex-skill|cli-llm|fallback] [--model <name>]
+    [--open] [--port 4378] [--json]
+
+Options:
+  --draft <path|->     Collected draft JSON path, or - for stdin.
+  --chapters <path|->  AI-authored chapters JSON path, or - for stdin.
+  --open               Start the viewer server and include its URL.
+  --json               Print machine-readable result JSON.
+  --help               Show this help.
+`;
+}
+
+function getFileName(filePath: string) {
+  return filePath.split('/').filter(Boolean).at(-1) ?? filePath;
 }
 
 function createHunkInfoMap(draft: ReviewTourDraft) {

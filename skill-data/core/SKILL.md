@@ -8,7 +8,8 @@ description: Core Review Tour workflow. Read this after the review-tour distribu
 Create a guided review experience from a local git diff.
 
 The default experience is the Review Tour viewer: collect the diff, create
-chapters, store the artifact in the OS cache, and open the localhost browser UI.
+chapters, store the artifact in the OS cache, start the localhost viewer, and
+return its URL.
 Use a chat-only review only when the user explicitly asks for an explanation in
 the chat, text, or "this conversation" instead of opening the viewer.
 
@@ -33,11 +34,11 @@ Read only the sections you need for the current step:
 - Do not write review artifacts inside the target repository.
 - Read git state and diffs only.
 - Store viewer artifacts under the OS cache directory via the CLI.
-- Use existing hunk IDs when writing viewer chapters.
+- Use existing hunk IDs when writing viewer chapters and file-level review groups.
 - Do not invent line numbers or hunk IDs.
 - Do not create a custom static HTML review page, `.review-tour.json`, Markdown artifact, or any other substitute viewer artifact when the `review-tour` CLI is unavailable.
 - Use the CLI `--open` path for the viewer, then return the localhost URL and artifact path.
-- Use the user's language for summaries, chapter titles, and review questions.
+- Use the user's language for summaries, chapter titles, review group titles and summaries, and review questions.
 
 ## CLI Availability
 
@@ -52,6 +53,11 @@ review-tour doctor --json
 and GitHub CLI status in one machine-readable payload. It always exits 0 with
 `--json`; read the `ok` field and the per-check `status` values instead of the
 exit code.
+
+In a sandboxed agent environment, a cache check may report `EPERM` even when the
+installed CLI is healthy. Retry `review-tour doctor --json` with the environment's
+normal approval mechanism before treating that result as an installation
+failure.
 
 If `review-tour` is not found or fails to start, stop and tell the user to
 install or relink the CLI:
@@ -94,8 +100,9 @@ Use chat-only mode only when the user explicitly says things like:
 ## Viewer Workflow
 
 The default viewer workflow must review the code and create AI-authored chapters
-before opening the viewer. Do not use `review-tour generate --json` as the normal
-path, because it only creates deterministic file-based chapters.
+with file-level review groups before opening the viewer. Do not use
+`review-tour generate --json` as the normal path, because it only creates
+deterministic file-based chapters and groups.
 
 1. Confirm the current directory is a git repository.
 2. Infer the diff mode:
@@ -104,17 +111,25 @@ path, because it only creates deterministic file-based chapters.
    - only unstaged changes: `working-tree`
    - only staged changes: `staged`
    - user-specified mode wins
-3. Run the deterministic CLI collector once for the inferred diff mode. Use explicit flags for PRs and branch diffs; use bare `review-tour collect --json` only when the default working-tree/staged behavior is the intended scope.
+3. Choose a unique draft path under the OS temporary directory, never inside the
+   reviewed repository. Run the deterministic CLI collector once for the
+   inferred diff mode and write the full draft there. Do not emit the full draft
+   with `--json` in the normal agent workflow because medium and large diffs can
+   exceed the agent's output or context limit. Use explicit flags for PRs and
+   branch diffs. Include untracked, non-ignored files when reviewing a working
+   tree.
 
 ```bash
-review-tour collect --json
-review-tour collect --pr https://github.com/owner/repo/pull/123 --json
-review-tour collect --base origin/main --head HEAD --mode base...head --json
-review-tour collect --mode working-tree --json
-review-tour collect --mode staged --json
+review-tour collect --mode working-tree --include-untracked --output <draft.json>
+review-tour collect --mode staged --output <draft.json>
+review-tour collect --base origin/main --head HEAD --mode base...head --output <draft.json>
+review-tour collect --pr https://github.com/owner/repo/pull/123 --output <draft.json>
 ```
 
-4. Read the draft JSON emitted by the collector. It contains files, hunks, hunk IDs, diff stats, repository metadata, optional `pullRequest` metadata, and warnings.
+4. Read the draft JSON from the temporary path. It contains files, hunks, hunk
+   IDs, diff stats, repository metadata, optional `pullRequest` metadata, and
+   warnings. If `UNTRACKED_FILES_SKIPPED` is present, rerun working-tree
+   collection with `--include-untracked` before authoring chapters.
 5. Review the code changes and generate a `{ title, prologue, chapters }` payload from the draft:
    - make `prologue.whyThisPr` explain the concrete reviewer-facing motivation or problem
    - make `prologue.whatItDoes` explain the new behavior or implementation outcome
@@ -124,6 +139,11 @@ review-tour collect --mode staged --json
    - order chapters by reviewer comprehension, not file order
    - when possible, order chapters by the processing flow a human reviewer would trace: entrypoint or user-facing surface, input parsing or validation, core behavior and data flow, state changes or external effects, outputs and error paths, then supporting tests or configuration
    - group hunks across files into the same chapter when they are part of one behavior step; do not split by directory, layer, or file type if that hides the flow
+   - include a non-empty `groups` array for every file entry in every AI-authored chapter
+   - within each file, group related hunks into meaningful processing or implementation units and give each group a concise title, an intent-focused summary, and its own risk level
+   - use only hunk IDs already assigned to that file entry; each group must reference one or more contiguous hunks in display order
+   - assign every hunk in the file entry to exactly one group, without overlaps, and order groups by the first hunk they contain
+   - keep group IDs unique within the file; prefer cohesive behavior groups over one group per hunk, but do not combine unrelated changes
    - place setup, schema, migration, or configuration chapters before behavior only when they are necessary to understand the runtime flow; otherwise place them after the behavior they support
    - use 3 to 7 chapters for normal diffs
    - place tests after the behavior they protect
@@ -133,7 +153,7 @@ review-tour collect --mode staged --json
    - assign each hunk to one primary chapter by default; reuse a hunk only when the same code must be inspected in multiple chapters
    - avoid reusing very large mixed-scope hunks across chapters; when a large hunk contains several concerns, assign it to one primary chapter and point reviewers to related behavior in the summary or review questions
    - include concrete review questions that help the user inspect risky behavior
-6. Create a chapters JSON payload with only existing hunk IDs.
+6. Create a chapters JSON payload with only existing hunk IDs and file-level review groups for every file entry.
 7. Run:
 
 ```bash
@@ -151,14 +171,18 @@ review-tour write --draft <draft.json> --chapters - --open --json <<'JSON'
 JSON
 ```
 
-8. If the viewer did not open automatically and a browser-control tool is already available, open the returned URL there. Do not spend extra steps discovering browser tools just to display the viewer.
+8. `--open` starts or reuses the localhost viewer server and returns its URL; it
+   does not launch a system browser. If a browser-control tool is already
+   available, navigate it to the returned URL. Do not spend extra steps
+   discovering browser tools just to display the viewer.
 9. Return the URL and artifact path briefly.
 
 ## Deterministic Fallback
 
 Use `review-tour generate --json` only if AI chapter generation fails after
 `collect` succeeds, and tell the user that the viewer was opened with
-deterministic file-based chapters instead of AI-authored review chapters.
+deterministic file-based chapters and generic per-file groups instead of
+AI-authored review chapters and group explanations.
 
 ```bash
 review-tour generate --json
@@ -188,16 +212,36 @@ type ReviewChapter = {
   index: number;
   title: string;
   summary: string;
-  risk: 'low' | 'medium' | 'high';
+  risk: ReviewRisk;
   rationale: string;
   reviewQuestions: string[];
   hunkIds: string[];
-  files: Array<{
-    path: string;
-    hunkIds: string[];
-  }>;
+  files: ReviewChapterFile[];
+};
+
+type ReviewRisk = 'low' | 'medium' | 'high';
+
+type ReviewChapterFile = {
+  path: string;
+  hunkIds: string[];
+  groups?: ReviewGroup[];
+};
+
+type ReviewGroup = {
+  id: string;
+  title: string;
+  summary: string;
+  risk: ReviewRisk;
+  hunkIds: string[];
 };
 ```
+
+`ReviewChapterFile.groups` is optional only so older `review-tour/v1` artifacts
+remain readable. In the normal AI-authored workflow, populate it with at least
+one group for every file entry and follow the grouping rules in Viewer Workflow.
+`generate` creates deterministic per-file groups. `write` preserves an omitted
+`groups` field for legacy payloads; when authored groups are present, it repairs
+any uncovered hunks with deterministic `Additional changes` groups.
 
 ## Chat-Only Workflow
 
@@ -284,14 +328,20 @@ Disallowed design:
 
 The CLI must reject or repair invalid artifacts before the viewer opens:
 
-- unknown hunk IDs
-- empty chapters
-- uncovered hunks
+- unknown chapter or review group hunk IDs
+- empty chapters or review groups with no hunk IDs
+- uncovered chapter hunks or file hunks not assigned to a review group
+- duplicate review group IDs or hunk assignments within a file
+- review groups that reference non-contiguous hunks
 - invalid repo hash or tour ID
 - invalid artifact schema
 
-Unknown hunk IDs are hard errors. Uncovered hunks are repaired by fallback
-chapter generation plus an `LLM_PARTIAL_COVERAGE` warning.
+Unknown hunk IDs, authored group entries with no hunk IDs, duplicate group IDs
+or assignments, and non-contiguous group assignments are hard errors. Uncovered chapter hunks are
+repaired by fallback chapter generation plus an `LLM_PARTIAL_COVERAGE` warning.
+When a file includes authored groups, hunks not assigned to one are repaired
+with deterministic `Additional changes` groups. Missing `groups` remains valid
+for older `review-tour/v1` artifacts.
 
 ## Security Rules
 

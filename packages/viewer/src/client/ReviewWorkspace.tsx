@@ -28,7 +28,7 @@ import SlidersHorizontalIcon from '@hugeicons/core-free-icons/SlidersHorizontalI
 import TextSelectIcon from '@hugeicons/core-free-icons/TextSelectIcon';
 import type { GitStatusEntry } from '@pierre/trees';
 import { FileTree as PierreFileTree, useFileTree } from '@pierre/trees/react';
-import type { DiffFile, ReviewChapter, ReviewTour } from 'review-tour/schema';
+import type { DiffFile, ReviewChapter, ReviewGroup, ReviewTour } from 'review-tour/schema';
 import { Button } from '#/components/ui/button';
 import { Checkbox } from '#/components/ui/checkbox';
 import { Input } from '#/components/ui/input';
@@ -95,12 +95,14 @@ export function ReviewWorkspace({
   onFoldsExpand,
   onFileViewedToggle,
   onFileFilter,
+  onGroupReviewedToggle,
   onNext,
   onPrevious,
   onChapterSelect,
   onReviewQuestionCheckedToggle,
   onSearchOpen,
   tour,
+  reviewedGroupIds,
   viewedFileIds,
 }: {
   chapter: ReviewChapter;
@@ -121,12 +123,14 @@ export function ReviewWorkspace({
   onFoldsExpand: (foldIds: readonly string[]) => void;
   onFileViewedToggle: (fileId: string) => void;
   onFileFilter: (value: string) => void;
+  onGroupReviewedToggle: (groupProgressId: string) => void;
   onNext: () => void;
   onPrevious: () => void;
   onChapterSelect: (chapter: ReviewChapter) => void;
   onReviewQuestionCheckedToggle: (questionId: string) => void;
   onSearchOpen: () => void;
   tour: ReviewTour;
+  reviewedGroupIds: ReadonlySet<string>;
   viewedFileIds: ReadonlySet<string>;
 }) {
   const { locale, t } = useI18n();
@@ -138,6 +142,15 @@ export function ReviewWorkspace({
     return files.filter((file) => file.path.toLowerCase().includes(query));
   }, [fileFilter, files]);
   const stats = getChapterStats(tour, chapter);
+  const reviewGroupsByFilePath = useMemo(() => {
+    const groupsByPath = new Map<string, ReviewGroup[]>();
+    for (const file of chapter.files) {
+      if (file.groups?.length) {
+        groupsByPath.set(file.path, file.groups);
+      }
+    }
+    return groupsByPath;
+  }, [chapter.files]);
   const [reviewPaneWidth, setReviewPaneWidth] = useState(readReviewPaneWidth);
   const [resizingReviewPane, setResizingReviewPane] = useState(false);
   const [activeTab, setActiveTab] = useState<ReviewWorkspaceTab>('chapters');
@@ -374,6 +387,7 @@ export function ReviewWorkspace({
               <DiffViewer
                 collapsedFileIds={diffFoldState.collapsedFileIds}
                 comments={comments}
+                chapterId={chapter.id}
                 expandedFoldIds={diffFoldState.expandedFoldIds}
                 files={visibleFiles}
                 onCommentAdd={onCommentAdd}
@@ -382,8 +396,12 @@ export function ReviewWorkspace({
                 onFileCollapsedChange={onFileCollapsedChange}
                 onFoldExpand={onFoldExpand}
                 onFoldsExpand={onFoldsExpand}
+                onGroupReviewedToggle={onGroupReviewedToggle}
                 onFileViewedToggle={onFileViewedToggle}
+                reviewGroupsByFilePath={reviewGroupsByFilePath}
+                reviewedGroupIds={reviewedGroupIds}
                 settings={resolvedDiffSettings}
+                tourId={tour.id}
                 viewedFileIds={viewedFileIds}
               />
             </div>

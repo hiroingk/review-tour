@@ -79,8 +79,8 @@ function helpText() {
   return `review-tour
 
 Commands:
-  generate [--pr <url|number>] [--base origin/main] [--head HEAD] [--mode base...head|working-tree|staged|custom] [--no-open] [--json]
-  collect --json [--pr <url|number>] [--base origin/main] [--head HEAD] [--mode base...head|working-tree|staged|custom]
+  generate [--pr <url|number>] [--base origin/main] [--head HEAD] [--mode base...head|working-tree|staged|custom] [--include-untracked] [--no-open] [--json]
+  collect [--pr <url|number>] [--base origin/main] [--head HEAD] [--mode base...head|working-tree|staged|custom] [--include-untracked] [--output <path>] [--json]
   write --draft <path|-> --chapters <path|-> [--open] [--json]
   open [latest|tourId] [--json]
   serve [--port 4378]
@@ -89,6 +89,11 @@ Commands:
   gc [--days 30] [--keep 20] [--all]
   update
   version
+
+Chapter payloads may include files[].groups to attach checkable explanations
+to contiguous hunk IDs within a file.
+
+The collect, generate, write, open, and serve commands accept --help.
 `;
 }
 

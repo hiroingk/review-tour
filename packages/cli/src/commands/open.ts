@@ -6,7 +6,14 @@ import {
   VIEWER_HEALTH_PATH,
   VIEWER_UI_VERSION,
 } from 'review-tour/viewer';
-import { getNumberOption, hasFlag, type ParsedArgs } from '../cliArgs.js';
+import {
+  assertAllowedOptions,
+  assertBooleanOptions,
+  assertStringOptions,
+  getNumberOption,
+  hasFlag,
+  type ParsedArgs,
+} from '../cliArgs.js';
 import { createRepoHash } from '../artifact/store.js';
 import { detectRepo } from '../git/detectRepo.js';
 
@@ -17,6 +24,12 @@ export type ViewerLaunchResult = {
 };
 
 export async function openCommand(args: ParsedArgs) {
+  validateOpenArgs(args);
+  if (hasFlag(args, 'help')) {
+    process.stdout.write(openHelpText());
+    return;
+  }
+
   const repo = detectRepo(process.cwd());
   const tourId = args.positionals[0] ?? 'latest';
   const port = getNumberOption(args, 'port') ?? DEFAULT_VIEWER_PORT;
@@ -164,4 +177,24 @@ function isServerListening(port: number) {
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export function validateOpenArgs(args: ParsedArgs) {
+  assertAllowedOptions(args, 'open', ['help', 'json', 'port']);
+  assertBooleanOptions(args, ['help', 'json']);
+  assertStringOptions(args, ['port']);
+  if (args.positionals.length > 1) {
+    throw new Error('review-tour open accepts at most one tour ID.');
+  }
+}
+
+function openHelpText() {
+  return `review-tour open
+
+Usage:
+  review-tour open [latest|tourId] [--port 4378] [--json]
+
+Starts the viewer server if needed and prints the localhost URL.
+It does not launch a system browser.
+`;
 }

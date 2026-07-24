@@ -1,12 +1,14 @@
 export type ReviewProgress = {
   chapterIds: ReadonlySet<string>;
   fileIds: ReadonlySet<string>;
+  groupIds: ReadonlySet<string>;
   questionIds: ReadonlySet<string>;
 };
 
 type StoredReviewProgress = {
   chapters?: unknown;
   files?: unknown;
+  groups?: unknown;
   questions?: unknown;
 };
 
@@ -14,6 +16,7 @@ export function createEmptyReviewProgress(): ReviewProgress {
   return {
     chapterIds: new Set(),
     fileIds: new Set(),
+    groupIds: new Set(),
     questionIds: new Set(),
   };
 }
@@ -29,6 +32,7 @@ export function readReviewProgress(storageKey: string, legacyChapterStorageKey?:
         return {
           chapterIds: toStringSet(parsed),
           fileIds: new Set<string>(),
+          groupIds: new Set<string>(),
           questionIds: new Set<string>(),
         };
       }
@@ -38,6 +42,7 @@ export function readReviewProgress(storageKey: string, legacyChapterStorageKey?:
         return {
           chapterIds: toStringSet(progress.chapters),
           fileIds: toStringSet(progress.files),
+          groupIds: toStringSet(progress.groups),
           questionIds: toStringSet(progress.questions),
         };
       }
@@ -50,6 +55,7 @@ export function readReviewProgress(storageKey: string, legacyChapterStorageKey?:
         return {
           chapterIds: toStringSet(parsed),
           fileIds: new Set<string>(),
+          groupIds: new Set<string>(),
           questionIds: new Set<string>(),
         };
       }
@@ -68,10 +74,16 @@ export function writeReviewProgress(storageKey: string, progress: ReviewProgress
     const value = {
       chapters: Array.from(progress.chapterIds),
       files: Array.from(progress.fileIds),
+      groups: Array.from(progress.groupIds),
       questions: Array.from(progress.questionIds),
     };
 
-    if (value.chapters.length === 0 && value.files.length === 0 && value.questions.length === 0) {
+    if (
+      value.chapters.length === 0 &&
+      value.files.length === 0 &&
+      value.groups.length === 0 &&
+      value.questions.length === 0
+    ) {
       window.localStorage.removeItem(storageKey);
     } else {
       window.localStorage.setItem(storageKey, JSON.stringify(value));
@@ -89,6 +101,20 @@ export function toggleSetValue(values: ReadonlySet<string>, value: string) {
     next.add(value);
   }
   return next;
+}
+
+export function getReviewGroupProgressId({
+  chapterId,
+  filePath,
+  groupId,
+  tourId,
+}: {
+  chapterId: string;
+  filePath: string;
+  groupId: string;
+  tourId: string;
+}) {
+  return `group:${JSON.stringify([tourId, chapterId, filePath, groupId])}`;
 }
 
 function toStringSet(value: unknown) {

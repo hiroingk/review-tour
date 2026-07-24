@@ -502,10 +502,44 @@ const demoTour: ReviewTour = {
           {
             path: 'src/server/webhooks/verifySignature.ts',
             hunkIds: ['hunk-verify-signature-1'],
+            groups: [
+              {
+                id: 'group-signature-verification',
+                title: 'Validate freshness and compare the HMAC safely',
+                summary:
+                  'The verifier binds the raw payload to Stripe’s timestamp, rejects requests ' +
+                  'outside the five-minute replay window, and checks equal-length digests with ' +
+                  '`timingSafeEqual` before any event data is trusted.',
+                risk: 'high',
+                hunkIds: ['hunk-verify-signature-1'],
+              },
+            ],
           },
           {
             path: 'src/server/webhooks/stripe.ts',
             hunkIds: ['hunk-stripe-handler-imports', 'hunk-stripe-handler-verify'],
+            groups: [
+              {
+                id: 'group-wire-signature-verifier',
+                title: 'Bring signature verification into the HTTP boundary',
+                summary:
+                  'The webhook handler now depends on the verifier and the configured signing ' +
+                  'secret, making authentication part of the request entrypoint rather than a ' +
+                  'downstream concern.',
+                risk: 'medium',
+                hunkIds: ['hunk-stripe-handler-imports'],
+              },
+              {
+                id: 'group-reject-untrusted-payloads',
+                title: 'Reject untrusted payloads before parsing',
+                summary:
+                  'The raw body is read once, verified, and rejected with a logged reason and a ' +
+                  '400 response when authentication fails. JSON parsing and event processing ' +
+                  'only happen after the signature check succeeds.',
+                risk: 'high',
+                hunkIds: ['hunk-stripe-handler-verify'],
+              },
+            ],
           },
         ],
       },
@@ -529,6 +563,27 @@ const demoTour: ReviewTour = {
           {
             path: 'src/server/webhooks/processEvent.ts',
             hunkIds: ['hunk-process-event-imports', 'hunk-process-event-idempotency'],
+            groups: [
+              {
+                id: 'group-wire-delivery-guards',
+                title: 'Wire in retry and delivery-history dependencies',
+                summary:
+                  'Event processing gains access to the retry helper and processed-event store, ' +
+                  'which become the two safeguards around the existing handler dispatch.',
+                risk: 'medium',
+                hunkIds: ['hunk-process-event-imports'],
+              },
+              {
+                id: 'group-idempotent-event-processing',
+                title: 'Skip duplicates, retry work, then record success',
+                summary:
+                  'Previously processed event IDs return early. New events retry the handler up ' +
+                  'to three times and are only marked processed after the handler succeeds, so ' +
+                  'failed attempts remain eligible for redelivery.',
+                risk: 'high',
+                hunkIds: ['hunk-process-event-idempotency'],
+              },
+            ],
           },
         ],
       },
@@ -553,10 +608,32 @@ const demoTour: ReviewTour = {
           {
             path: 'src/config/env.ts',
             hunkIds: ['hunk-env-secret'],
+            groups: [
+              {
+                id: 'group-webhook-secret-configuration',
+                title: 'Require the signing secret without exposing it in logs',
+                summary:
+                  'Startup now fails when `STRIPE_WEBHOOK_SECRET` is missing, while log ' +
+                  'redaction keeps the credential out of diagnostics and error reports.',
+                risk: 'medium',
+                hunkIds: ['hunk-env-secret'],
+              },
+            ],
           },
           {
             path: 'src/server/webhooks/stripe.test.ts',
             hunkIds: ['hunk-stripe-test-1'],
+            groups: [
+              {
+                id: 'group-signature-verification-tests',
+                title: 'Exercise rejected and accepted signatures',
+                summary:
+                  'The tests pin the missing-header and stale-timestamp failures alongside a ' +
+                  'valid signed payload, covering the verifier’s main security decisions.',
+                risk: 'low',
+                hunkIds: ['hunk-stripe-test-1'],
+              },
+            ],
           },
         ],
       },

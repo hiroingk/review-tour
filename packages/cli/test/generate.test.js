@@ -35,6 +35,73 @@ test('creates file-based fallback chapters covering every hunk', () => {
   expect(hunkIds.sort()).toEqual(['hunk_lockfile', 'hunk_source', 'hunk_test']);
 });
 
+test('creates a fallback review group for each generated chapter file', () => {
+  const draft = {
+    diff: {
+      files: [
+        file('src/auth/service.ts', 'hunk_source'),
+        file('src/auth/service.test.ts', 'hunk_test'),
+      ],
+    },
+  };
+
+  const chapters = createFileBasedChapters(draft);
+  const sourceFile = chapters.find((chapter) => chapter.id === 'chapter_source_changes').files[0];
+  const testFile = chapters.find((chapter) => chapter.id === 'chapter_tests').files[0];
+
+  expect(sourceFile.groups).toEqual([
+    {
+      hunkIds: ['hunk_source'],
+      id: 'group_file_hunk_source',
+      risk: 'high',
+      summary: 'Review the related changes in `src/auth/service.ts` as one implementation unit.',
+      title: 'Review service.ts',
+    },
+  ]);
+  expect(testFile.groups).toEqual([
+    {
+      hunkIds: ['hunk_test'],
+      id: 'group_file_hunk_test',
+      risk: 'high',
+      summary:
+        'Review the related changes in `src/auth/service.test.ts` as one implementation unit.',
+      title: 'Review service.test.ts',
+    },
+  ]);
+});
+
+test('omits files with no hunks from fallback chapters and review groups', () => {
+  const draft = {
+    diff: {
+      files: [
+        file('src/app.ts', 'hunk_source'),
+        {
+          id: 'file_binary',
+          path: 'src/logo.png',
+          status: 'modified',
+          additions: 0,
+          deletions: 0,
+          hunks: [],
+        },
+      ],
+    },
+  };
+
+  const chapters = createFileBasedChapters(draft);
+
+  expect(chapters).toHaveLength(1);
+  expect(chapters[0].files.map((chapterFile) => chapterFile.path)).toEqual(['src/app.ts']);
+  expect(chapters[0].files.flatMap((chapterFile) => chapterFile.groups ?? [])).toEqual([
+    {
+      hunkIds: ['hunk_source'],
+      id: 'group_file_hunk_source',
+      risk: 'medium',
+      summary: 'Review the related changes in `src/app.ts` as one implementation unit.',
+      title: 'Review app.ts',
+    },
+  ]);
+});
+
 test('creates fallback prologue from generated chapters', () => {
   const draft = {
     repository: { name: 'example-repo' },

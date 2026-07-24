@@ -65,6 +65,7 @@ export function ProductDemo() {
   const [diffFoldState, setDiffFoldState] = useState<DiffFoldState>(createEmptyDiffFoldState);
   const [diffSettings, setDiffSettings] = useState<DiffDisplaySettings>(defaultDiffDisplaySettings);
   const [viewedFileIds, setViewedFileIds] = useState<ReadonlySet<string>>(new Set());
+  const [reviewedGroupIds, setReviewedGroupIds] = useState<ReadonlySet<string>>(new Set());
   const [completedChapterIds, setCompletedChapterIds] = useState<ReadonlySet<string>>(new Set());
   const [checkedReviewQuestionIds, setCheckedReviewQuestionIds] = useState<ReadonlySet<string>>(
     new Set(),
@@ -145,6 +146,11 @@ export function ProductDemo() {
                   setStringSetValue(current, fileId, !current.has(fileId)),
                 )
               }
+              onGroupReviewedToggle={(groupProgressId) =>
+                setReviewedGroupIds((current) =>
+                  setStringSetValue(current, groupProgressId, !current.has(groupProgressId)),
+                )
+              }
               onFoldExpand={(foldId) =>
                 setDiffFoldState((current) => ({
                   ...current,
@@ -165,6 +171,7 @@ export function ProductDemo() {
                 )
               }
               onSearchOpen={() => {}}
+              reviewedGroupIds={reviewedGroupIds}
               tour={demoTour}
               viewedFileIds={viewedFileIds}
             />
