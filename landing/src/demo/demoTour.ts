@@ -1,4 +1,4 @@
-import type { DiffFile, ReviewTour } from 'review-tour/schema';
+import type { DiffFile, ReviewGroup, ReviewTour } from 'review-tour/schema';
 import type { Locale } from '#/client/i18n';
 
 const verifySignatureFile: DiffFile = {
@@ -686,6 +686,43 @@ export function getDemoTour(locale: Locale): ReviewTour {
       ],
     },
   };
+  const localizedReviewGroups: Record<string, Pick<ReviewGroup, 'summary' | 'title'>> = {
+    'group-signature-verification': {
+      title: 'タイムスタンプの有効範囲を確認し、HMACダイジェストを安全に比較する',
+      summary:
+        '生のペイロードとStripeのタイムスタンプを結び付け、リプレイ攻撃を防ぐための5分の許容範囲を外れたリクエストを拒否します。イベントデータを信頼する前に、ダイジェストの長さが一致することを確認したうえで`timingSafeEqual`を使って比較します。',
+    },
+    'group-wire-signature-verifier': {
+      title: 'HTTPの入口で署名を検証する',
+      summary:
+        'Webhookハンドラーが検証処理と設定済みの署名シークレットを利用するようになり、後続処理ではなくリクエストの入口で認証します。',
+    },
+    'group-reject-untrusted-payloads': {
+      title: '信頼できないペイロードを解析前に拒否する',
+      summary:
+        '生のリクエスト本文を一度だけ読み取って検証し、認証に失敗した場合は理由をログに記録して400を返します。JSONの解析とイベント処理は、署名検証に成功した後でのみ実行します。',
+    },
+    'group-wire-delivery-guards': {
+      title: '再試行処理と処理済みイベントストアを組み込む',
+      summary:
+        'イベント処理から再試行ヘルパーと処理済みイベントストアを利用できるようにし、既存のハンドラー呼び出しに再試行と重複配信の防止を適用します。',
+    },
+    'group-idempotent-event-processing': {
+      title: '重複を除外し、再試行後に処理成功を記録する',
+      summary:
+        '処理済みイベントIDを検出した場合は早期リターンします。新しいイベントはハンドラーを最大3回再試行し、成功した後にだけ処理済みとして記録するため、失敗したイベントは再配信時にもう一度処理できます。',
+    },
+    'group-webhook-secret-configuration': {
+      title: '署名シークレットを必須化し、ログから秘匿する',
+      summary:
+        '`STRIPE_WEBHOOK_SECRET`が設定されていない場合は起動に失敗します。また、ログのマスキングにより、診断ログやエラーレポートに認証情報が出力されないようにします。',
+    },
+    'group-signature-verification-tests': {
+      title: '署名検証の拒否ケースと正常系をテストする',
+      summary:
+        '署名ヘッダーがない場合とタイムスタンプが古い場合の拒否ケースに加え、正しく署名されたペイロードもテストし、署名検証の主要な分岐を網羅します。',
+    },
+  };
 
   return {
     ...demoTour,
@@ -697,6 +734,17 @@ export function getDemoTour(locale: Locale): ReviewTour {
       chapters: demoTour.tour.chapters.map((chapter) => ({
         ...chapter,
         ...localizedChapters[chapter.id],
+        files: chapter.files.map((file) =>
+          file.groups
+            ? {
+                ...file,
+                groups: file.groups.map((group) => ({
+                  ...group,
+                  ...localizedReviewGroups[group.id],
+                })),
+              }
+            : file,
+        ),
       })),
     },
   };
