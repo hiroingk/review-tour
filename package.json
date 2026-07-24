@@ -61,6 +61,7 @@
     "skills:prompt": "npx --yes skills use . --skill review-tour",
     "typecheck": "vp check --no-fmt --no-lint",
     "test": "vp test",
+    "test:smoke:install": "pnpm run build && node scripts/smoke-installed-package.mjs",
     "verify": "pnpm run check && pnpm run skills:lint && pnpm run skills:manifest:check && pnpm run knip && pnpm run test && pnpm run build"
   },
   "dependencies": {

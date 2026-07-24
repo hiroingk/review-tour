@@ -351,6 +351,18 @@ pnpm run test
 pnpm run build
 ```
 
+Run the installed-package smoke test:
+
+```bash
+pnpm run test:smoke:install
+```
+
+The smoke test builds and packs the public package, installs the tarball into an
+isolated temporary prefix, and exercises the bundled skill, CLI artifact
+workflow, viewer API, rendered route, and static assets. It does not launch a
+browser or call an AI model. Successful runs clean up their temporary files.
+Failed runs preserve them and print their location for debugging.
+
 Before opening a pull request, run:
 
 ```bash
