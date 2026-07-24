@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import type { ReviewChapter, ReviewTour } from 'review-tour/schema';
 import { Card, CardPanel } from '#/components/ui/card';
 import { Skeleton } from '#/components/ui/skeleton';
@@ -27,6 +27,7 @@ import {
   writeReviewProgress,
   type ReviewProgress,
 } from './reviewProgress';
+import { resetScrollPosition } from './scrollPosition';
 import { CommandPalette, type CommandPaletteTarget, ShellMessage } from './ui';
 import { TourOverview } from './TourOverview';
 
@@ -566,13 +567,10 @@ function ReadyTourPage({
     tour.tour.chapters[0] ??
     null;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (mode !== 'review' || pendingFilePath || typeof window === 'undefined') return;
 
     resetReviewScrollPositions();
-    const frame = window.requestAnimationFrame(resetReviewScrollPositions);
-
-    return () => window.cancelAnimationFrame(frame);
   }, [mode, pendingFilePath, selectedId]);
 
   useEffect(() => {
@@ -686,12 +684,14 @@ function getLegacyChapterProgressStorageKey({
 function resetReviewScrollPositions() {
   if (typeof window === 'undefined') return;
 
-  window.scrollTo({ left: 0, top: 0, behavior: 'auto' });
+  resetScrollPosition(document.scrollingElement);
+  resetScrollPosition(document.documentElement);
+  resetScrollPosition(document.body);
 
   for (const element of document.querySelectorAll<HTMLElement>(
     '[data-left-pane-scroll], [data-diff-scroll-root]',
   )) {
-    element.scrollTo({ left: 0, top: 0, behavior: 'auto' });
+    resetScrollPosition(element);
   }
 }
 
