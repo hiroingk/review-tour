@@ -47,8 +47,8 @@ export function App() {
             link={{ href: `${GITHUB_URL}#highlights`, label: t('Explore the viewer') }}
             mock={<CodeJumpMock />}
           />
-          <InstallPanel />
         </section>
+        <InstallPanel />
         <Statement />
         <FinalCta />
       </main>

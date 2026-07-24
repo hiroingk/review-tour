@@ -211,10 +211,17 @@ export function FeaturePanel({
 export function InstallPanel() {
   const { t } = useLandingI18n();
   return (
-    <div className="scroll-mt-24 rounded-2xl bg-lp-panel" id="install">
-      <div className="grid items-center gap-10 p-6 md:grid-cols-2 md:gap-14 md:p-14">
+    <section
+      aria-labelledby="install-heading"
+      className="mt-20 scroll-mt-24 border-y border-lp-line bg-lp-panel md:mt-28"
+      id="install"
+    >
+      <div className="lp-container grid items-center gap-12 py-16 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-20 md:py-24">
         <div>
-          <h2 className="lp-heading lp-heading-feature text-[26px] leading-[1.3] md:text-[30px]">
+          <h2
+            className="lp-heading lp-heading-feature text-[26px] leading-[1.3] md:text-[30px]"
+            id="install-heading"
+          >
             <span className="lp-heading-lead">{t('Start with the skill.')}</span>{' '}
             <span className="lp-heading-muted">
               {t(
@@ -245,7 +252,7 @@ export function InstallPanel() {
           />
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 
